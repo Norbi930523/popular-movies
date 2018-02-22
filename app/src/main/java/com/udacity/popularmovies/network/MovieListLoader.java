@@ -1,12 +1,22 @@
 package com.udacity.popularmovies.network;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.model.Movie;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -19,26 +29,43 @@ import okhttp3.Response;
 
 public class MovieListLoader extends AsyncTaskLoader<List<Movie>> {
 
-    private static final String POPULAR_MOVIES_URL = "https://api.themoviedb.org/3/movie/popular?api_key=%s";
+    public static final String API_ENDPOINT_PARAM = "apiEndpoint";
 
-    public MovieListLoader(Context context) {
+    private static final String TAG = MovieListLoader.class.getSimpleName();
+
+    private OkHttpClient client = new OkHttpClient();
+
+    private JsonParser jsonParser = new JsonParser();
+
+    private Type listType = new TypeToken<List<Movie>>(){}.getType();
+
+    private Bundle args;
+
+    private Gson gson;
+
+    public MovieListLoader(Context context, Bundle args) {
         super(context);
+        this.args = args;
+
+        this.gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
     }
 
     @Override
     public List<Movie> loadInBackground() {
-        String url = String.format(POPULAR_MOVIES_URL, getContext().getString(R.string.moviedb_api_key));
-
-        OkHttpClient client = new OkHttpClient();
-
-        Request request = new Request.Builder().url(url).build();
+        Request request = new Request.Builder()
+                .url(args.getString(API_ENDPOINT_PARAM))
+                .build();
 
         try {
             Response response = client.newCall(request).execute();
 
-            System.out.println(response.body().string());
+            JsonObject json = jsonParser.parse(response.body().string()).getAsJsonObject();
+
+            List<Movie> ret = gson.fromJson(json.getAsJsonArray("results"), listType);
+
+            return ret;
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "An error occurred while loading movies", e);
         }
 
         return null;

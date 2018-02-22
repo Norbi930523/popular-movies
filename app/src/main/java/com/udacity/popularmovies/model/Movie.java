@@ -1,5 +1,7 @@
 package com.udacity.popularmovies.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -12,30 +14,38 @@ public class Movie implements Serializable {
 
     private Long id;
 
+    @SerializedName("vote_count")
     private Long voteCount;
 
     private Boolean video;
 
+    @SerializedName("vote_average")
     private Double voteAverage;
 
     private String title;
 
     private Double popularity;
 
+    @SerializedName("poster_path")
     private String posterPath;
 
+    @SerializedName("original_language")
     private String originalLanguage;
 
+    @SerializedName("original_title")
     private String originalTitle;
 
+    @SerializedName("genre_ids")
     private List<Long> genreIds;
 
+    @SerializedName("backdrop_path")
     private String backdropPath;
 
     private Boolean adult;
 
     private String overview;
 
+    @SerializedName("release_date")
     private Date releaseDate;
 
     public Long getId() {

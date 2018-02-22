@@ -3,4 +3,13 @@
     <string name="moviedb_api_key" translatable="false">@string/my_moviedb_api_key</string>
 
     <string name="app_name">Popular Movies</string>
+
+    <!-- Offline dialog -->
+    <string name="offline_dialog_title">You are offline</string>
+    <string name="offline_dialog_message">Internet connection is required to use this application.</string>
+    <string name="offline_dialog_retry">Retry</string>
+
+    <!-- Settings menu -->
+    <string name="settings_sort_by_popularity">Sort by popularity</string>
+    <string name="settings_sort_by_ratings">Sort by ratings</string>
 </resources>

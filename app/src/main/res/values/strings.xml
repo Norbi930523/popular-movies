@@ -10,6 +10,6 @@
     <string name="offline_dialog_retry">Retry</string>
 
     <!-- Settings menu -->
-    <string name="settings_sort_by_popularity">Sort by popularity</string>
-    <string name="settings_sort_by_ratings">Sort by ratings</string>
+    <string name="settings_sort_by_popularity">Most popular</string>
+    <string name="settings_sort_by_ratings">Highest rated</string>
 </resources>

@@ -61,9 +61,7 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> {
 
             JsonObject json = jsonParser.parse(response.body().string()).getAsJsonObject();
 
-            List<Movie> ret = gson.fromJson(json.getAsJsonArray("results"), listType);
-
-            return ret;
+            return gson.fromJson(json.getAsJsonArray("results"), listType);
         } catch (IOException e) {
             Log.e(TAG, "An error occurred while loading movies", e);
         }

@@ -2,6 +2,7 @@ package com.udacity.popularmovies.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -9,15 +10,20 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieListLoader;
+import com.udacity.popularmovies.view.MovieGridAdapter;
 
 import java.util.List;
 
@@ -27,19 +33,38 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final Integer MOVIE_LOADER_ID = 1;
 
-    private enum MovieSorting {
+    private enum MovieSortOrder {
         BY_POPULARITY, BY_RATINGS
     }
 
-    private MovieSorting movieSorting;
+    private MovieSortOrder movieSortOrder;
+
+    private RecyclerView moviesRecyclerView;
+
+    private MovieGridAdapter movieGridAdapter;
+
+    private ProgressBar loadingIndicator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // TODO LoadingIndicator background
+        // TODO Picasso placeholder + error
+        // TODO DetailsActivity
+        // TODO paging?
+
+        int orientation = getResources().getConfiguration().orientation;
+        int spanCount = orientation == Configuration.ORIENTATION_PORTRAIT ? 2 : 3;
+
+        moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
+        moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+
+        loadingIndicator = findViewById(R.id.loadingIndicator);
+
         /* By default, sort movies by popularity */
-        movieSorting = MovieSorting.BY_POPULARITY;
+        movieSortOrder = MovieSortOrder.BY_POPULARITY;
 
         loadMovies();
     }
@@ -50,9 +75,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             return;
         }
 
+        loadingIndicator.setVisibility(View.VISIBLE);
+
         Bundle args = new Bundle();
 
-        switch (movieSorting) {
+        switch (movieSortOrder) {
             case BY_POPULARITY:
                 args.putString(MovieListLoader.API_ENDPOINT_PARAM, MovieDbUrlFactory.popularMovies(this));
                 break;
@@ -60,11 +87,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 args.putString(MovieListLoader.API_ENDPOINT_PARAM, MovieDbUrlFactory.topRatedMovies(this));
                 break;
             default:
-                Log.w(TAG, "Could not create API endpoint URL for " + movieSorting);
+                Log.w(TAG, "Could not create API endpoint URL for " + movieSortOrder);
                 return;
         }
 
-        getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, args, this).forceLoad();
+        getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, args, this).forceLoad();
     }
 
     @Override
@@ -73,8 +100,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         menuInflater.inflate(R.menu.settings, menu);
 
         /* Toggle the currently visible sorting option. ( https://stackoverflow.com/a/10692826 ) */
-        menu.findItem(R.id.sortByPopularity).setVisible(movieSorting == MovieSorting.BY_RATINGS);
-        menu.findItem(R.id.sortByRatings).setVisible(movieSorting == MovieSorting.BY_POPULARITY);
+        menu.findItem(R.id.sortByPopularity).setVisible(movieSortOrder == MovieSortOrder.BY_RATINGS);
+        menu.findItem(R.id.sortByRatings).setVisible(movieSortOrder == MovieSortOrder.BY_POPULARITY);
 
         return true;
     }
@@ -84,16 +111,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         switch (item.getItemId()){
             case R.id.sortByPopularity:
-                return sortBy(MovieSorting.BY_POPULARITY);
+                return sortBy(MovieSortOrder.BY_POPULARITY);
             case R.id.sortByRatings:
-                return sortBy(MovieSorting.BY_RATINGS);
+                return sortBy(MovieSortOrder.BY_RATINGS);
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean sortBy(MovieSorting sorting){
-        movieSorting = sorting;
+    private boolean sortBy(MovieSortOrder sorting){
+        movieSortOrder = sorting;
         loadMovies();
 
         invalidateOptionsMenu();
@@ -108,7 +135,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onLoadFinished(Loader<List<Movie>> loader, List<Movie> data) {
+        loadingIndicator.setVisibility(View.GONE);
 
+        if(movieGridAdapter == null){
+            movieGridAdapter = new MovieGridAdapter(data, this);
+            moviesRecyclerView.setAdapter(movieGridAdapter);
+        } else {
+            movieGridAdapter.updateMovies(data);
+        }
     }
 
     @Override

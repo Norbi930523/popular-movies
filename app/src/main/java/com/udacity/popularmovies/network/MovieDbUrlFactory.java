@@ -14,6 +14,8 @@ public class MovieDbUrlFactory {
 
     private static final String TOP_RATED_MOVIES_URL = "https://api.themoviedb.org/3/movie/top_rated?api_key=%s";
 
+    private static final String POSTER_URL = "http://image.tmdb.org/t/p/w185/%s";
+
     public static String popularMovies(Context context){
         String apiKey = context.getString(R.string.moviedb_api_key);
 
@@ -24,5 +26,9 @@ public class MovieDbUrlFactory {
         String apiKey = context.getString(R.string.moviedb_api_key);
 
         return String.format(TOP_RATED_MOVIES_URL, apiKey);
+    }
+
+    public static String posterImage(String posterPath){
+        return String.format(POSTER_URL, posterPath);
     }
 }

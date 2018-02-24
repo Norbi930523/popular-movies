@@ -16,6 +16,10 @@ public class MovieDbUrlFactory {
 
     private static final String POSTER_URL = "http://image.tmdb.org/t/p/w185/%s";
 
+    private static final String MOVIE_TRAILERS = "https://api.themoviedb.org/3/movie/%d/videos?api_key=%s";
+
+    private static final String YOUTUBE_URL = "https://www.youtube.com/watch?v=%s";
+
     public static String popularMovies(Context context){
         String apiKey = context.getString(R.string.moviedb_api_key);
 
@@ -30,5 +34,15 @@ public class MovieDbUrlFactory {
 
     public static String posterImage(String posterPath){
         return String.format(POSTER_URL, posterPath);
+    }
+
+    public static String movieTrailers(Context context, Long movieId){
+        String apiKey = context.getString(R.string.moviedb_api_key);
+
+        return String.format(MOVIE_TRAILERS, movieId, apiKey);
+    }
+
+    public static String youtubeTrailerUrl(String key){
+        return String.format(YOUTUBE_URL, key);
     }
 }

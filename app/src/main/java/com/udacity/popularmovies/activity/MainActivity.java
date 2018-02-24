@@ -24,6 +24,7 @@ import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieListLoader;
+import com.udacity.popularmovies.network.NetworkUtils;
 import com.udacity.popularmovies.view.MovieGridAdapter;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private static final Integer MOVIE_LOADER_ID = 1;
+    private static final int MOVIE_LOADER_ID = 100;
 
     private class MovieSortOrder {
         public static final int BY_POPULARITY = 0;
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void loadMovies(){
-        if(!isOnline()){
+        if(!NetworkUtils.isOnline(this)){
             showOfflineDialog();
             return;
         }
@@ -175,13 +176,4 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         dialog.show();
     }
 
-    /**
-     * From https://stackoverflow.com/questions/1560788/how-to-check-internet-access-on-android-inetaddress-never-times-out
-     */
-    private boolean isOnline() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
 }

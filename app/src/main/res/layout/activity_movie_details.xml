@@ -16,7 +16,7 @@
             android:id="@+id/originalTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/MovieTitle"/>
+            style="@style/MovieDetailsTitle.Level1"/>
 
         <!-- Localized title -->
         <TextView
@@ -52,7 +52,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/release_date"
-                    style="@style/MovieDetailTitle"/>
+                    style="@style/MovieDetailsTitle.Level2"/>
 
                 <TextView
                     android:id="@+id/releaseDate"
@@ -66,7 +66,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/rating"
-                    style="@style/MovieDetailTitle"/>
+                    style="@style/MovieDetailsTitle.Level2"/>
 
                 <TextView
                     android:id="@+id/rating"
@@ -83,7 +83,31 @@
             android:id="@+id/overview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/font_medium"/>
+            android:textSize="@dimen/font_medium"
+            android:layout_marginBottom="@dimen/spacing_large"/>
+
+        <!-- Trailers section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trailers_title"
+            style="@style/MovieDetailsTitle.Level1"/>
+
+        <!-- Loading info (loading..., no trailers found, user is offline) -->
+        <TextView
+            android:id="@+id/trailerLoadingInfoText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/loading_trailers"
+            android:padding="@dimen/spacing_medium"/>
+
+        <ListView
+            android:id="@+id/movieTrailersList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:scrollbars="none"
+            android:visibility="gone"/>
+        <!-- END Trailers section -->
 
     </LinearLayout>
 

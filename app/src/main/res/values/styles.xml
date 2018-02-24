@@ -8,16 +8,18 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="MovieTitle">
-        <item name="android:textSize">@dimen/font_large</item>
+    <style name="MovieDetailsTitle">
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@android:color/black</item>
     </style>
 
-    <style name="MovieDetailTitle">
+    <style name="MovieDetailsTitle.Level1">
+        <item name="android:textSize">@dimen/font_large</item>
+
+    </style>
+
+    <style name="MovieDetailsTitle.Level2">
         <item name="android:textSize">@dimen/font_medium</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@android:color/black</item>
     </style>
 
 </resources>

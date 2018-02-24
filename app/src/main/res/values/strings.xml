@@ -6,7 +6,7 @@
 
     <!-- Offline dialog -->
     <string name="offline_dialog_title">You are offline</string>
-    <string name="offline_dialog_message">Internet connection is required to use this application.</string>
+    <string name="offline_dialog_message">Internet connection is required to use this application. Please enable either your Wi-Fi or your mobile data.</string>
     <string name="offline_dialog_retry">Retry</string>
 
     <!-- Settings menu -->

@@ -6,13 +6,10 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
-import android.widget.ListView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,10 +19,8 @@ import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.model.MovieTrailer;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieTrailerListLoader;
-import com.udacity.popularmovies.view.MovieTrailerAdapter;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MovieDetailsActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<MovieTrailer>> {
@@ -36,9 +31,7 @@ public class MovieDetailsActivity extends AppCompatActivity implements LoaderMan
 
     private TextView trailerLoadingInfoText;
 
-    private ListView movieTrailersList;
-
-    private ArrayAdapter<MovieTrailer> trailerAdapter;
+    private LinearLayout movieTrailersList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,12 +59,8 @@ public class MovieDetailsActivity extends AppCompatActivity implements LoaderMan
     private void loadTrailers(Long movieId) {
         trailerLoadingInfoText = findViewById(R.id.trailerLoadingInfoText);
 
-        trailerAdapter = new MovieTrailerAdapter(this);
-
         movieTrailersList = findViewById(R.id.movieTrailersList);
-        movieTrailersList.setAdapter(trailerAdapter);
-        movieTrailersList.setOnItemClickListener(movieTrailerClickListener);
-        movieTrailersList.setFocusable(false); // prevents ScrollView from jumping to ListView when data is loaded
+        //movieTrailersList.setFocusable(false); // prevents ScrollView from jumping to ListView when data is loaded
 
         Bundle args = new Bundle();
         args.putLong(MovieTrailerListLoader.MOVIE_ID_PARAM, movieId);
@@ -126,6 +115,8 @@ public class MovieDetailsActivity extends AppCompatActivity implements LoaderMan
 
     @Override
     public void onLoadFinished(Loader<List<MovieTrailer>> loader, List<MovieTrailer> data) {
+        movieTrailersList.removeAllViewsInLayout();
+
         if(data == null || data.isEmpty()){
             trailerLoadingInfoText.setText(R.string.no_trailers);
             return;
@@ -134,12 +125,27 @@ public class MovieDetailsActivity extends AppCompatActivity implements LoaderMan
         trailerLoadingInfoText.setVisibility(View.GONE);
         movieTrailersList.setVisibility(View.VISIBLE);
 
-        trailerAdapter.clear();
-        trailerAdapter.addAll(data);
+        for(int i = 0; i < data.size(); i++){
+            movieTrailersList.addView(createMovieTrailerItem(data.get(i), i == data.size() - 1));
+        }
+    }
 
-        setListViewHeightBasedOnItems(movieTrailersList);
+    private View createMovieTrailerItem(MovieTrailer trailer, boolean isLastItem){
+        LayoutInflater layoutInflater = LayoutInflater.from(this);
 
-        trailerAdapter.notifyDataSetChanged();
+        View movieTrailerItem = layoutInflater.inflate(R.layout.movie_trailer_item, movieTrailersList, false);
+        movieTrailerItem.setTag(trailer.getKey());
+        movieTrailerItem.setOnClickListener(movieTrailerItemClickListener);
+
+        TextView trailerName = movieTrailerItem.findViewById(R.id.trailerName);
+        trailerName.setText(trailer.getName());
+
+        if(isLastItem){
+            /* Hide the divider below the last item of the list */
+            movieTrailerItem.findViewById(R.id.listItemDivider).setVisibility(View.GONE);
+        }
+
+        return movieTrailerItem;
     }
 
     @Override
@@ -147,9 +153,10 @@ public class MovieDetailsActivity extends AppCompatActivity implements LoaderMan
 
     }
 
-    private AdapterView.OnItemClickListener movieTrailerClickListener = new AdapterView.OnItemClickListener() {
+    private View.OnClickListener movieTrailerItemClickListener = new View.OnClickListener() {
+
         @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+        public void onClick(View view) {
             Uri youtubeTrailerUri = Uri.parse(MovieDbUrlFactory.youtubeTrailerUrl(view.getTag().toString()));
 
             Intent watchTrailerIntent = new Intent(Intent.ACTION_VIEW, youtubeTrailerUri);
@@ -160,38 +167,4 @@ public class MovieDetailsActivity extends AppCompatActivity implements LoaderMan
         }
     };
 
-    /**
-     * Sets ListView height dynamically based on the height of the items.
-     * From https://stackoverflow.com/a/35955121
-     *
-     * @param listView to be resized
-     */
-    private void setListViewHeightBasedOnItems(ListView listView) {
-
-        ListAdapter listAdapter = listView.getAdapter();
-        if (listAdapter != null) {
-
-            int numberOfItems = listAdapter.getCount();
-
-            // Get total height of all items.
-            int totalItemsHeight = 0;
-            for (int itemPos = 0; itemPos < numberOfItems; itemPos++) {
-                View item = listAdapter.getView(itemPos, null, listView);
-                item.measure(0, 0);
-                totalItemsHeight += item.getMeasuredHeight();
-            }
-
-            // Get total height of all item dividers.
-            int totalDividersHeight = listView.getDividerHeight() *
-                    (numberOfItems - 1);
-
-            // Set list height.
-            ViewGroup.LayoutParams params = listView.getLayoutParams();
-            params.height = totalItemsHeight + totalDividersHeight;
-            listView.setLayoutParams(params);
-            listView.requestLayout();
-
-        }
-
-    }
 }

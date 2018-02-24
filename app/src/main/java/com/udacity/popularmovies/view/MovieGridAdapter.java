@@ -1,13 +1,16 @@
 package com.udacity.popularmovies.view;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
 import com.udacity.popularmovies.R;
+import com.udacity.popularmovies.activity.MovieDetailsActivity;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 
@@ -44,8 +47,8 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
 
         Picasso.with(context)
                 .load(MovieDbUrlFactory.posterImage(movie.getPosterPath()))
-                .fit()
-                .centerCrop()
+                .placeholder(R.drawable.picasso_placeholder_portrait)
+                .error(R.drawable.picasso_error_portrait)
                 .into(holder.poster);
     }
 
@@ -59,13 +62,24 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
         notifyDataSetChanged();
     }
 
-    public static class MovieViewHolder extends RecyclerView.ViewHolder {
+    class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private ImageView poster;
 
         public MovieViewHolder(ImageView itemView) {
             super(itemView);
             this.poster = itemView;
+            this.poster.setOnClickListener(this);
+        }
+
+        @Override
+        public void onClick(View view) {
+            Movie movie = movies.get(getAdapterPosition());
+
+            Intent movieDetailsIntent = new Intent(context, MovieDetailsActivity.class);
+            movieDetailsIntent.putExtra(MovieDetailsActivity.MOVIE_PARAM, movie);
+
+            context.startActivity(movieDetailsIntent);
         }
     }
 

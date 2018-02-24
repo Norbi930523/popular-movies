@@ -10,6 +10,18 @@
     <string name="offline_dialog_retry">Retry</string>
 
     <!-- Settings menu -->
-    <string name="settings_sort_by_popularity">Most popular</string>
-    <string name="settings_sort_by_ratings">Highest rated</string>
+    <string name="settings_sort_by_popularity">Sort by popularity</string>
+    <string name="settings_sort_by_ratings">Sort by ratings</string>
+
+    <!-- Movie details -->
+    <string name="movie_details_title">Movie details</string>
+    <string name="error_movie_required">Movie data is required!</string>
+    <string name="date_format">dd/MM/yyyy</string>
+    <string name="release_date">Release date</string>
+    <string name="rating">Rating</string>
+
+    <plurals name="rating_pattern">
+        <item quantity="one">%1$s / 10 (based on %2$d vote)</item>
+        <item quantity="other">%1$s / 10 (based on %2$d votes)</item>
+    </plurals>
 </resources>

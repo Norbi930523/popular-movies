@@ -50,11 +50,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // TODO LoadingIndicator background
-        // TODO Picasso placeholder + error
-        // TODO DetailsActivity
-        // TODO paging?
-
         int orientation = getResources().getConfiguration().orientation;
         int spanCount = orientation == Configuration.ORIENTATION_PORTRAIT ? 2 : 3;
 

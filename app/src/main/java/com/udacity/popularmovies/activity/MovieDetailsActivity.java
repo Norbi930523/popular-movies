@@ -28,7 +28,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
         }
 
         Intent intent = getIntent();
-        Movie movie = (Movie) intent.getSerializableExtra(MOVIE_PARAM);
+        Movie movie = intent.getParcelableExtra(MOVIE_PARAM);
 
         if(movie == null){
             finish();

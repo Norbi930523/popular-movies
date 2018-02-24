@@ -12,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -33,11 +34,12 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final Integer MOVIE_LOADER_ID = 1;
 
-    private enum MovieSortOrder {
-        BY_POPULARITY, BY_RATINGS
+    private class MovieSortOrder {
+        public static final int BY_POPULARITY = 0;
+        public static final int BY_RATINGS = 1;
     }
 
-    private MovieSortOrder movieSortOrder;
+    private int movieSortOrder;
 
     private RecyclerView moviesRecyclerView;
 
@@ -50,11 +52,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        int orientation = getResources().getConfiguration().orientation;
-        int spanCount = orientation == Configuration.ORIENTATION_PORTRAIT ? 2 : 3;
-
         moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
-        moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
+        moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
 
         loadingIndicator = findViewById(R.id.loadingIndicator);
 
@@ -62,6 +61,21 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         movieSortOrder = MovieSortOrder.BY_POPULARITY;
 
         loadMovies();
+    }
+
+    /**
+     * From Stage 1 review
+     */
+    private int numberOfColumns() {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+        int posterWidth = 185;
+        float screenWidth = displayMetrics.widthPixels / displayMetrics.density;
+
+        int columns = (int) (screenWidth / posterWidth);
+
+        return columns < 2 ? 2 : columns;
     }
 
     private void loadMovies(){
@@ -75,10 +89,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         Bundle args = new Bundle();
 
         switch (movieSortOrder) {
-            case BY_POPULARITY:
+            case MovieSortOrder.BY_POPULARITY:
                 args.putString(MovieListLoader.API_ENDPOINT_PARAM, MovieDbUrlFactory.popularMovies(this));
                 break;
-            case BY_RATINGS:
+            case MovieSortOrder.BY_RATINGS:
                 args.putString(MovieListLoader.API_ENDPOINT_PARAM, MovieDbUrlFactory.topRatedMovies(this));
                 break;
             default:
@@ -114,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean sortBy(MovieSortOrder sorting){
+    private boolean sortBy(int sorting){
         movieSortOrder = sorting;
         loadMovies();
 

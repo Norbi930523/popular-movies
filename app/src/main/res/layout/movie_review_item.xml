@@ -5,16 +5,19 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/trailerName"
+        android:id="@+id/reviewAuthor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
+        android:paddingTop="@dimen/spacing_medium"
+        style="@style/MovieDetailsTitle.Level2"/>
+
+    <TextView
+        android:id="@+id/reviewContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:textSize="@dimen/font_medium"
-        android:paddingTop="@dimen/spacing_small"
-        android:paddingBottom="@dimen/spacing_small"
-        android:drawableLeft="@drawable/ic_play"
-        android:drawableStart="@drawable/ic_play"
-        android:drawablePadding="@dimen/spacing_small"/>
+        android:paddingBottom="@dimen/spacing_medium" />
 
     <View
         android:id="@+id/listItemDivider"

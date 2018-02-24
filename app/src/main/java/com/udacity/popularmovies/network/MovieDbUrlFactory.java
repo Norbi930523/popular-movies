@@ -18,6 +18,8 @@ public class MovieDbUrlFactory {
 
     private static final String MOVIE_TRAILERS = "https://api.themoviedb.org/3/movie/%d/videos?api_key=%s";
 
+    private static final String MOVIE_REVIEWS = "https://api.themoviedb.org/3/movie/%d/reviews?api_key=%s";
+
     private static final String YOUTUBE_URL = "https://www.youtube.com/watch?v=%s";
 
     public static String popularMovies(Context context){
@@ -40,6 +42,12 @@ public class MovieDbUrlFactory {
         String apiKey = context.getString(R.string.moviedb_api_key);
 
         return String.format(MOVIE_TRAILERS, movieId, apiKey);
+    }
+
+    public static String movieReviews(Context context, Long movieId){
+        String apiKey = context.getString(R.string.moviedb_api_key);
+
+        return String.format(MOVIE_REVIEWS, movieId, apiKey);
     }
 
     public static String youtubeTrailerUrl(String key){

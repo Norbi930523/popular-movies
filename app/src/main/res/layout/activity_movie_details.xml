@@ -98,8 +98,10 @@
             android:id="@+id/trailerLoadingInfoText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textSize="@dimen/font_medium"
             android:text="@string/loading_trailers"
-            android:padding="@dimen/spacing_medium"/>
+            android:paddingTop="@dimen/spacing_medium"
+            android:paddingBottom="@dimen/spacing_medium"/>
 
         <LinearLayout
             android:id="@+id/movieTrailersList"
@@ -108,6 +110,39 @@
             android:orientation="vertical"
             android:visibility="gone" />
         <!-- END Trailers section -->
+
+        <!-- Reviews section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reviews_title"
+            android:layout_marginTop="@dimen/spacing_large"
+            style="@style/MovieDetailsTitle.Level1"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reviews_hint"
+            android:textSize="@dimen/font_small"
+            android:textStyle="italic"/>
+
+        <!-- Loading info (loading..., no reviews found, user is offline) -->
+        <TextView
+            android:id="@+id/reviewLoadingInfoText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/loading_reviews"
+            android:textSize="@dimen/font_medium"
+            android:paddingTop="@dimen/spacing_medium"
+            android:paddingBottom="@dimen/spacing_medium"/>
+
+        <LinearLayout
+            android:id="@+id/movieReviewsList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"/>
+        <!-- END Reviews section -->
 
     </LinearLayout>
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- https://stackoverflow.com/a/15021758 -->
+    <item name="review_item_full_content_key" type="id" />
+    <item name="review_item_show_full_content_key" type="id" />
+</resources>

@@ -28,6 +28,7 @@ public class MovieContract {
         public static final String COLUMN_VOTE_AVERAGE = "VOTE_AVERAGE";
         public static final String COLUMN_VOTE_COUNT = "VOTE_COUNT";
         public static final String COLUMN_OVERVIEW = "OVERVIEW";
+        public static final String COLUMN_POSTER = "POSTER";
 
         public static final String CREATE_SQL = "CREATE TABLE " + TABLE_NAME + " (" +
                 COLUMN_MOVIE_ID + " INTEGER PRIMARY KEY, " +
@@ -36,7 +37,8 @@ public class MovieContract {
                 COLUMN_RELEASE_DATE + " INTEGER, " +
                 COLUMN_VOTE_AVERAGE + " REAL, " +
                 COLUMN_VOTE_COUNT + " INTEGER, " +
-                COLUMN_OVERVIEW + " TEXT);";
+                COLUMN_OVERVIEW + " TEXT, " +
+                COLUMN_POSTER + " TEXT);";
 
     }
 

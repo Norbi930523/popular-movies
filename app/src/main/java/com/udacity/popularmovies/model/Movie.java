@@ -52,6 +52,8 @@ public class Movie implements Parcelable {
     @SerializedName("release_date")
     private Date releaseDate;
 
+    private Boolean fromDatabase = Boolean.FALSE;
+
     public Movie(){
         super();
     }
@@ -256,5 +258,13 @@ public class Movie implements Parcelable {
 
     public void setReleaseDate(Date releaseDate) {
         this.releaseDate = releaseDate;
+    }
+
+    public Boolean getFromDatabase() {
+        return fromDatabase;
+    }
+
+    public void setFromDatabase(Boolean fromDatabase) {
+        this.fromDatabase = fromDatabase;
     }
 }

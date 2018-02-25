@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 import com.udacity.popularmovies.R;
+import com.udacity.popularmovies.common.FileUtils;
 import com.udacity.popularmovies.database.movie.MovieContract;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.model.MovieReview;
@@ -116,13 +117,21 @@ public class MovieDetailsActivity extends AppCompatActivity {
         ImageView posterImage = findViewById(R.id.posterImage);
         posterImage.setContentDescription(movie.getTitle());
 
-        String posterImageUrl = MovieDbUrlFactory.posterImage(movie.getPosterPath());
+        if(isFavourite){
+            Picasso.with(this)
+                    .load(FileUtils.readPoster(this, movie.getPosterPath()))
+                    .placeholder(R.drawable.picasso_placeholder_portrait)
+                    .error(R.drawable.picasso_error_portrait)
+                    .into(posterImage);
+        } else {
+            String posterImageUrl = MovieDbUrlFactory.posterImage(movie.getPosterPath());
 
-        Picasso.with(this)
-                .load(posterImageUrl)
-                .placeholder(R.drawable.picasso_placeholder_portrait)
-                .error(R.drawable.picasso_error_portrait)
-                .into(posterImage);
+            Picasso.with(this)
+                    .load(posterImageUrl)
+                    .placeholder(R.drawable.picasso_placeholder_portrait)
+                    .error(R.drawable.picasso_error_portrait)
+                    .into(posterImage);
+        }
 
         /* Original title */
         TextView originalTitle = findViewById(R.id.originalTitle);
@@ -169,8 +178,11 @@ public class MovieDetailsActivity extends AppCompatActivity {
                     values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
                     values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
                     values.put(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW, movie.getOverview());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_POSTER, movie.getPosterPath());
 
                     getContentResolver().insert(MovieContract.FavouriteMovieEntry.CONTENT_URI, values);
+
+                    FileUtils.savePoster(MovieDetailsActivity.this, movie.getPosterPath());
                 } else {
                     Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId().toString()).build();
                     getContentResolver().delete(uri, null, null);

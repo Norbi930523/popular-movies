@@ -1,22 +1,24 @@
 package com.udacity.popularmovies.network;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import com.udacity.popularmovies.R;
+import com.udacity.popularmovies.database.movie.MovieContract;
 import com.udacity.popularmovies.model.Movie;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -29,7 +31,7 @@ import okhttp3.Response;
 
 public class MovieListLoader extends AsyncTaskLoader<List<Movie>> {
 
-    public static final String API_ENDPOINT_PARAM = "apiEndpoint";
+    public static final String SOURCE_URI_PARAM = "sourceUri";
 
     private static final String TAG = MovieListLoader.class.getSimpleName();
 
@@ -52,8 +54,20 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> {
 
     @Override
     public List<Movie> loadInBackground() {
+        String uri = args.getString(SOURCE_URI_PARAM);
+
+        if(uri.startsWith("http")){
+            return loadFromUrl(uri);
+        } else if(uri.startsWith("content://")){
+            return loadFromDatabase(uri);
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+    private List<Movie> loadFromUrl(String url){
         Request request = new Request.Builder()
-                .url(args.getString(API_ENDPOINT_PARAM))
+                .url(url)
                 .build();
 
         try {
@@ -66,6 +80,35 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> {
             Log.e(TAG, "An error occurred while loading movies", e);
         }
 
-        return null;
+        return new ArrayList<>();
+    }
+
+    private List<Movie> loadFromDatabase(String contentUri){
+        Cursor cursor = getContext().getContentResolver().query(
+                Uri.parse(contentUri),
+                null,
+                null,
+                null,
+                null
+        );
+
+        List<Movie> movies = new ArrayList<>();
+
+        while(cursor.moveToNext()){
+            Movie movie = new Movie();
+            movie.setId(cursor.getLong(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_MOVIE_ID)));
+            movie.setOriginalTitle(cursor.getString(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_ORIGINAL_TITLE)));
+            movie.setTitle(cursor.getString(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_LOCALIZED_TITLE)));
+            movie.setReleaseDate(new Date(cursor.getLong(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_RELEASE_DATE))));
+            movie.setVoteAverage(cursor.getDouble(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_AVERAGE)));
+            movie.setVoteCount(cursor.getLong(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT)));
+            movie.setOverview(cursor.getString(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW)));
+
+            movies.add(movie);
+        }
+
+        cursor.close();
+
+        return movies;
     }
 }

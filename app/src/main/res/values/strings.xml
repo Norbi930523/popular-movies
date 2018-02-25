@@ -12,6 +12,7 @@
     <!-- Settings menu -->
     <string name="settings_sort_by_popularity">Sort by popularity</string>
     <string name="settings_sort_by_ratings">Sort by ratings</string>
+    <string name="settings_show_favourites">Show favourites</string>
 
     <!-- Movie details -->
     <string name="movie_details_title">Movie details</string>

@@ -1,10 +1,6 @@
 package com.udacity.popularmovies.activity;
 
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.res.Configuration;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -21,6 +17,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 
 import com.udacity.popularmovies.R;
+import com.udacity.popularmovies.database.movie.MovieContract;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieListLoader;
@@ -38,6 +35,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private class MovieSortOrder {
         public static final int BY_POPULARITY = 0;
         public static final int BY_RATINGS = 1;
+        public static final int FAVOURITES = 2;
     }
 
     private int movieSortOrder;
@@ -91,13 +89,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         switch (movieSortOrder) {
             case MovieSortOrder.BY_POPULARITY:
-                args.putString(MovieListLoader.API_ENDPOINT_PARAM, MovieDbUrlFactory.popularMovies(this));
+                args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieDbUrlFactory.popularMovies(this));
                 break;
             case MovieSortOrder.BY_RATINGS:
-                args.putString(MovieListLoader.API_ENDPOINT_PARAM, MovieDbUrlFactory.topRatedMovies(this));
+                args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieDbUrlFactory.topRatedMovies(this));
+                break;
+            case MovieSortOrder.FAVOURITES:
+                args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieContract.FavouriteMovieEntry.CONTENT_URI.toString());
                 break;
             default:
-                Log.w(TAG, "Could not create API endpoint URL for " + movieSortOrder);
+                Log.w(TAG, "Could not create source URI for " + movieSortOrder);
                 return;
         }
 
@@ -110,8 +111,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         menuInflater.inflate(R.menu.settings, menu);
 
         /* Toggle the currently visible sorting option. ( https://stackoverflow.com/a/10692826 ) */
-        menu.findItem(R.id.sortByPopularity).setVisible(movieSortOrder == MovieSortOrder.BY_RATINGS);
-        menu.findItem(R.id.sortByRatings).setVisible(movieSortOrder == MovieSortOrder.BY_POPULARITY);
+        menu.findItem(R.id.sortByPopularity).setVisible(movieSortOrder != MovieSortOrder.BY_POPULARITY);
+        menu.findItem(R.id.sortByRatings).setVisible(movieSortOrder != MovieSortOrder.BY_RATINGS);
+        menu.findItem(R.id.showFavourites).setVisible(movieSortOrder != MovieSortOrder.FAVOURITES);
 
         return true;
     }
@@ -124,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 return sortBy(MovieSortOrder.BY_POPULARITY);
             case R.id.sortByRatings:
                 return sortBy(MovieSortOrder.BY_RATINGS);
+            case R.id.showFavourites:
+                return sortBy(MovieSortOrder.FAVOURITES);
         }
 
         return super.onOptionsItemSelected(item);

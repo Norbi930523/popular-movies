@@ -1,6 +1,8 @@
 package com.udacity.popularmovies.activity;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -8,6 +10,7 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 import com.udacity.popularmovies.R;
+import com.udacity.popularmovies.database.movie.MovieContract;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.model.MovieReview;
 import com.udacity.popularmovies.model.MovieTrailer;
@@ -43,6 +47,8 @@ public class MovieDetailsActivity extends AppCompatActivity {
 
     private LinearLayout movieReviewsList;
 
+    private boolean isFavourite;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,11 +67,26 @@ public class MovieDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        isFavourite = isFavouriteMovie(movie.getId());
+
         populateUI(movie);
 
         loadTrailers(movie.getId());
 
         loadReviews(movie.getId());
+
+    }
+
+    private boolean isFavouriteMovie(Long movieId){
+        Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movieId.toString()).build();
+
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+
+        boolean isMovieFound = cursor != null && cursor.getCount() == 1;
+
+        cursor.close();
+
+        return isMovieFound;
     }
 
     private void loadReviews(Long movieId) {
@@ -90,7 +111,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
         getSupportLoaderManager().restartLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
     }
 
-    private void populateUI(Movie movie) {
+    private void populateUI(final Movie movie) {
         /* Poster image */
         ImageView posterImage = findViewById(R.id.posterImage);
         posterImage.setContentDescription(movie.getTitle());
@@ -128,6 +149,35 @@ public class MovieDetailsActivity extends AppCompatActivity {
         /* Overview */
         TextView overview = findViewById(R.id.overview);
         overview.setText(movie.getOverview());
+
+        /* Toggle favourite */
+        Button toggleFavourite = findViewById(R.id.toggleFavourite);
+
+        if(isFavourite){
+            toggleFavourite.setText("Unfav");
+        }
+
+        toggleFavourite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!isFavourite){
+                    ContentValues values = new ContentValues();
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_MOVIE_ID, movie.getId());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_ORIGINAL_TITLE, movie.getOriginalTitle());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_LOCALIZED_TITLE, movie.getTitle());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate().getTime());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
+                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW, movie.getOverview());
+
+                    getContentResolver().insert(MovieContract.FavouriteMovieEntry.CONTENT_URI, values);
+                } else {
+                    Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId().toString()).build();
+                    getContentResolver().delete(uri, null, null);
+                }
+
+            }
+        });
     }
 
     /* Movie trailers loader callback */

@@ -52,6 +52,10 @@ public class Movie implements Parcelable {
     @SerializedName("release_date")
     private Date releaseDate;
 
+    public Movie(){
+        super();
+    }
+
     protected Movie(Parcel in) {
         if (in.readByte() == 0) {
             id = null;

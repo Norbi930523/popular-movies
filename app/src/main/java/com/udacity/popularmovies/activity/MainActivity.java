@@ -71,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             selectedMovieCategory = MovieCategories.POPULAR;
         }
 
+        loadMovies(true);
+
     }
 
     @Override
@@ -79,13 +81,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         Boolean contentChanged = FavouriteMovieContentObserver.getInstance().getContentChanged();
 
-        /* Load movies on the first run or
-           when the FavouriteMovie content changes and we are on the Favourites page */
-        if(contentChanged == null || (contentChanged && selectedMovieCategory == MovieCategories.FAVOURITES)){
-            loadMovies();
+        /* Reload movies when the FavouriteMovie content changes and we are on the Favourites page */
+        if(contentChanged && selectedMovieCategory == MovieCategories.FAVOURITES){
+            loadMovies(false);
         }
-
-        FavouriteMovieContentObserver.getInstance().setContentChanged(Boolean.FALSE);
     }
 
     @Override
@@ -101,8 +100,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         outState.putInt(SELECTED_MOVIE_CATEGORY_KEY, selectedMovieCategory);
 
-        /* Clean the contentChanged state, so the movies are reloaded on screen rotation */
-        FavouriteMovieContentObserver.getInstance().setContentChanged(null);
     }
 
     /**
@@ -120,11 +117,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         return columns < 2 ? 2 : columns;
     }
 
-    private void loadMovies(){
+    private void loadMovies(boolean initLoader){
         if(!NetworkUtils.isOnline(this)){
             showOfflineDialog();
             return;
         }
+
+        FavouriteMovieContentObserver.getInstance().setContentChanged(Boolean.FALSE);
 
         loadingIndicator.setVisibility(View.VISIBLE);
 
@@ -145,7 +144,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 return;
         }
 
-        getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, args, this).forceLoad();
+        if(initLoader){
+            getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, args, this).forceLoad();
+        } else {
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, args, this).forceLoad();
+        }
     }
 
     @Override
@@ -178,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private boolean showCategory(int category){
         selectedMovieCategory = category;
-        loadMovies();
+        loadMovies(false);
 
         invalidateOptionsMenu();
 
@@ -215,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .setPositiveButton(R.string.offline_dialog_retry, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        loadMovies();
+                        loadMovies(false);
                     }
                 })
                 .create();

@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 
 import com.udacity.popularmovies.R;
+import com.udacity.popularmovies.database.movie.FavouriteMovieContentObserver;
 import com.udacity.popularmovies.database.movie.MovieContract;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
@@ -30,15 +31,17 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    private static final String SELECTED_MOVIE_CATEGORY_KEY = "selectedMovieCategory";
+
     private static final int MOVIE_LOADER_ID = 100;
 
-    private class MovieSortOrder {
-        public static final int BY_POPULARITY = 0;
-        public static final int BY_RATINGS = 1;
-        public static final int FAVOURITES = 2;
+    private class MovieCategories {
+        static final int POPULAR = 0;
+        static final int TOP_RATED = 1;
+        static final int FAVOURITES = 2;
     }
 
-    private int movieSortOrder;
+    private int selectedMovieCategory;
 
     private RecyclerView moviesRecyclerView;
 
@@ -56,10 +59,50 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         loadingIndicator = findViewById(R.id.loadingIndicator);
 
-        /* By default, sort movies by popularity */
-        movieSortOrder = MovieSortOrder.BY_POPULARITY;
+        getContentResolver().registerContentObserver(
+                MovieContract.FavouriteMovieEntry.CONTENT_URI,
+                true,
+                FavouriteMovieContentObserver.getInstance());
 
-        loadMovies();
+        if(savedInstanceState != null){
+            selectedMovieCategory = savedInstanceState.getInt(SELECTED_MOVIE_CATEGORY_KEY);
+        } else {
+            /* By default, show popular movies */
+            selectedMovieCategory = MovieCategories.POPULAR;
+        }
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Boolean contentChanged = FavouriteMovieContentObserver.getInstance().getContentChanged();
+
+        /* Load movies on the first run or
+           when the FavouriteMovie content changes and we are on the Favourites page */
+        if(contentChanged == null || (contentChanged && selectedMovieCategory == MovieCategories.FAVOURITES)){
+            loadMovies();
+        }
+
+        FavouriteMovieContentObserver.getInstance().setContentChanged(Boolean.FALSE);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        getContentResolver().unregisterContentObserver(FavouriteMovieContentObserver.getInstance());
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(SELECTED_MOVIE_CATEGORY_KEY, selectedMovieCategory);
+
+        /* Clean the contentChanged state, so the movies are reloaded on screen rotation */
+        FavouriteMovieContentObserver.getInstance().setContentChanged(null);
     }
 
     /**
@@ -87,18 +130,18 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         Bundle args = new Bundle();
 
-        switch (movieSortOrder) {
-            case MovieSortOrder.BY_POPULARITY:
+        switch (selectedMovieCategory) {
+            case MovieCategories.POPULAR:
                 args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieDbUrlFactory.popularMovies(this));
                 break;
-            case MovieSortOrder.BY_RATINGS:
+            case MovieCategories.TOP_RATED:
                 args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieDbUrlFactory.topRatedMovies(this));
                 break;
-            case MovieSortOrder.FAVOURITES:
+            case MovieCategories.FAVOURITES:
                 args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieContract.FavouriteMovieEntry.CONTENT_URI.toString());
                 break;
             default:
-                Log.w(TAG, "Could not create source URI for " + movieSortOrder);
+                Log.w(TAG, "Could not create source URI for " + selectedMovieCategory);
                 return;
         }
 
@@ -110,10 +153,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.settings, menu);
 
-        /* Toggle the currently visible sorting option. ( https://stackoverflow.com/a/10692826 ) */
-        menu.findItem(R.id.sortByPopularity).setVisible(movieSortOrder != MovieSortOrder.BY_POPULARITY);
-        menu.findItem(R.id.sortByRatings).setVisible(movieSortOrder != MovieSortOrder.BY_RATINGS);
-        menu.findItem(R.id.showFavourites).setVisible(movieSortOrder != MovieSortOrder.FAVOURITES);
+        /* Toggle the currently visible category option. ( https://stackoverflow.com/a/10692826 ) */
+        menu.findItem(R.id.showPopular).setVisible(selectedMovieCategory != MovieCategories.POPULAR);
+        menu.findItem(R.id.showTopRated).setVisible(selectedMovieCategory != MovieCategories.TOP_RATED);
+        menu.findItem(R.id.showFavourites).setVisible(selectedMovieCategory != MovieCategories.FAVOURITES);
 
         return true;
     }
@@ -122,19 +165,19 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch (item.getItemId()){
-            case R.id.sortByPopularity:
-                return sortBy(MovieSortOrder.BY_POPULARITY);
-            case R.id.sortByRatings:
-                return sortBy(MovieSortOrder.BY_RATINGS);
+            case R.id.showPopular:
+                return showCategory(MovieCategories.POPULAR);
+            case R.id.showTopRated:
+                return showCategory(MovieCategories.TOP_RATED);
             case R.id.showFavourites:
-                return sortBy(MovieSortOrder.FAVOURITES);
+                return showCategory(MovieCategories.FAVOURITES);
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private boolean sortBy(int sorting){
-        movieSortOrder = sorting;
+    private boolean showCategory(int category){
+        selectedMovieCategory = category;
         loadMovies();
 
         invalidateOptionsMenu();

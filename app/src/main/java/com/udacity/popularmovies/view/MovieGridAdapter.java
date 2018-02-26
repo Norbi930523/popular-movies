@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.activity.MovieDetailsActivity;
+import com.udacity.popularmovies.common.FileUtils;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 
@@ -45,11 +46,20 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     public void onBindViewHolder(MovieViewHolder holder, int position) {
         Movie movie = movies.get(position);
 
-        Picasso.with(context)
-                .load(MovieDbUrlFactory.posterImage(movie.getPosterPath()))
-                .placeholder(R.drawable.picasso_placeholder_portrait)
-                .error(R.drawable.picasso_error_portrait)
-                .into(holder.poster);
+        if(movie.getFromDatabase()){
+            Picasso.with(context)
+                    .load(FileUtils.readPoster(context, movie.getPosterPath()))
+                    .placeholder(R.drawable.picasso_placeholder_portrait)
+                    .error(R.drawable.picasso_error_portrait)
+                    .into(holder.poster);
+        } else {
+            Picasso.with(context)
+                    .load(MovieDbUrlFactory.posterImage(movie.getPosterPath()))
+                    .placeholder(R.drawable.picasso_placeholder_portrait)
+                    .error(R.drawable.picasso_error_portrait)
+                    .into(holder.poster);
+        }
+
     }
 
     @Override

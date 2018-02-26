@@ -34,6 +34,19 @@ public class FileUtils {
         }
     }
 
+    public static void deletePoster(Context context, String posterPath){
+        try {
+            File posterFile = getPosterFile(context, posterPath);
+
+            if(posterFile != null){
+                posterFile.delete();
+            }
+        } catch(Exception e){
+            /* Should not happen, just making sure the app does not crash */
+            Log.e(TAG, "An error occurred while reading poster", e);
+        }
+    }
+
     public static void savePoster(final Context context, final String posterPath){
         Runnable savePosterTask = new Runnable() {
             @Override
@@ -59,7 +72,7 @@ public class FileUtils {
     private static File getPostersDirectory(Context context){
         File postersDir = new File(context.getFilesDir(), POSTERS_DIRECTORY);
 
-        boolean success = false;
+        boolean success = true;
 
         if(!postersDir.exists()){
             success = postersDir.mkdir();

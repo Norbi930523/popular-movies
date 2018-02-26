@@ -103,6 +103,7 @@ public class MovieListLoader extends AsyncTaskLoader<List<Movie>> {
             movie.setVoteAverage(cursor.getDouble(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_AVERAGE)));
             movie.setVoteCount(cursor.getLong(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT)));
             movie.setOverview(cursor.getString(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW)));
+            movie.setPosterPath(cursor.getString(cursor.getColumnIndex(MovieContract.FavouriteMovieEntry.COLUMN_POSTER)));
             movie.setFromDatabase(Boolean.TRUE);
 
             movies.add(movie);

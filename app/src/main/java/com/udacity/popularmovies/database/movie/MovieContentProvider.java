@@ -105,6 +105,8 @@ public class MovieContentProvider extends BaseContentProvider {
                 throw new UnsupportedOperationException("Unsupported operation 'insert' for URI: " + uri.toString());
         }
 
+        getContext().getContentResolver().notifyChange(returnUri, null);
+
         return returnUri;
     }
 
@@ -112,6 +114,7 @@ public class MovieContentProvider extends BaseContentProvider {
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
         final SQLiteDatabase database = dbHelper.getWritableDatabase();
 
+        Uri affectedUri = null;
         int affectedRows = 0;
 
         switch (URI_MATCHER.match(uri)) {
@@ -120,6 +123,7 @@ public class MovieContentProvider extends BaseContentProvider {
                         MovieContract.FavouriteMovieEntry.TABLE_NAME,
                         selection,
                         selectionArgs);
+                affectedUri = MovieContract.FavouriteMovieEntry.CONTENT_URI;
                 break;
             case FAVOURITE_MOVIE_WITH_ID:
                 String movieId = uri.getPathSegments().get(1);
@@ -128,7 +132,13 @@ public class MovieContentProvider extends BaseContentProvider {
                         MovieContract.FavouriteMovieEntry.TABLE_NAME,
                         MovieContract.FavouriteMovieEntry.COLUMN_MOVIE_ID + " = ?",
                         new String[]{ movieId });
+
+                affectedUri = MovieContract.FavouriteMovieEntry.CONTENT_URI;
                 break;
+        }
+
+        if(affectedRows > 0 && affectedUri != null){
+            getContext().getContentResolver().notifyChange(affectedUri, null);
         }
 
         return affectedRows;

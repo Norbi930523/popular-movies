@@ -186,6 +186,8 @@ public class MovieDetailsActivity extends AppCompatActivity {
                 } else {
                     Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId().toString()).build();
                     getContentResolver().delete(uri, null, null);
+
+                    FileUtils.deletePoster(MovieDetailsActivity.this, movie.getPosterPath());
                 }
 
             }

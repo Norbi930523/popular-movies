@@ -1,6 +1,9 @@
 package com.udacity.popularmovies.activity;
 
+import android.content.Context;
 import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -22,7 +25,7 @@ import com.udacity.popularmovies.database.movie.MovieContract;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieListLoader;
-import com.udacity.popularmovies.network.NetworkUtils;
+import com.udacity.popularmovies.network.NetworkConnectionContext;
 import com.udacity.popularmovies.view.MovieGridAdapter;
 
 import java.util.List;
@@ -35,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private static final int MOVIE_LOADER_ID = 100;
 
-    private class MovieCategories {
+    private class MovieCategory {
         static final int POPULAR = 0;
         static final int TOP_RATED = 1;
         static final int FAVOURITES = 2;
@@ -54,6 +57,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        /* Before doing anything, initialize the network connection context */
+        NetworkConnectionContext.getInstance().setOnline(isOnline(this));
+
         moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
         moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
 
@@ -68,7 +74,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             selectedMovieCategory = savedInstanceState.getInt(SELECTED_MOVIE_CATEGORY_KEY);
         } else {
             /* By default, show popular movies */
-            selectedMovieCategory = MovieCategories.POPULAR;
+            selectedMovieCategory = MovieCategory.POPULAR;
+        }
+
+        if(NetworkConnectionContext.getInstance().isOffline()){
+            /* Only the Favourite movies are available in offline mode */
+            selectedMovieCategory = MovieCategory.FAVOURITES;
+            showOfflineDialog();
         }
 
         loadMovies(true);
@@ -82,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         Boolean contentChanged = FavouriteMovieContentObserver.getInstance().hasContentChanged();
 
         /* Reload movies when the FavouriteMovie content changes and we are on the Favourites page */
-        if(contentChanged && selectedMovieCategory == MovieCategories.FAVOURITES){
+        if(contentChanged && selectedMovieCategory == MovieCategory.FAVOURITES){
             loadMovies(false);
         }
     }
@@ -118,8 +130,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private void loadMovies(boolean initLoader){
-        if(!NetworkUtils.isOnline(this)){
-            showOfflineDialog();
+        if(NetworkConnectionContext.getInstance().isOffline() && isNetworkRequiredForSelectedCategory()){
+            Log.w(TAG, "Tried to load movies in offline mode for a category that requires online mode: " + selectedMovieCategory);
             return;
         }
 
@@ -130,13 +142,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         Bundle args = new Bundle();
 
         switch (selectedMovieCategory) {
-            case MovieCategories.POPULAR:
+            case MovieCategory.POPULAR:
                 args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieDbUrlFactory.popularMovies(this));
                 break;
-            case MovieCategories.TOP_RATED:
+            case MovieCategory.TOP_RATED:
                 args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieDbUrlFactory.topRatedMovies(this));
                 break;
-            case MovieCategories.FAVOURITES:
+            case MovieCategory.FAVOURITES:
                 args.putString(MovieListLoader.SOURCE_URI_PARAM, MovieContract.FavouriteMovieEntry.CONTENT_URI.toString());
                 break;
             default:
@@ -151,15 +163,25 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
+    private boolean isNetworkRequiredForSelectedCategory(){
+        return selectedMovieCategory != MovieCategory.FAVOURITES;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        if(NetworkConnectionContext.getInstance().isOffline()){
+            /* If the user is offline, only the Favourites page is available,
+             * so it is unnecessary to render the settings menu */
+            return false;
+        }
+
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.settings, menu);
 
-        /* Toggle the currently visible category option. ( https://stackoverflow.com/a/10692826 ) */
-        menu.findItem(R.id.showPopular).setVisible(selectedMovieCategory != MovieCategories.POPULAR);
-        menu.findItem(R.id.showTopRated).setVisible(selectedMovieCategory != MovieCategories.TOP_RATED);
-        menu.findItem(R.id.showFavourites).setVisible(selectedMovieCategory != MovieCategories.FAVOURITES);
+        /* When online, toggle the currently visible category option. ( https://stackoverflow.com/a/10692826 ) */
+        menu.findItem(R.id.showPopular).setVisible(selectedMovieCategory != MovieCategory.POPULAR);
+        menu.findItem(R.id.showTopRated).setVisible(selectedMovieCategory != MovieCategory.TOP_RATED);
+        menu.findItem(R.id.showFavourites).setVisible(selectedMovieCategory != MovieCategory.FAVOURITES);
 
         return true;
     }
@@ -169,11 +191,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         switch (item.getItemId()){
             case R.id.showPopular:
-                return showCategory(MovieCategories.POPULAR);
+                return showCategory(MovieCategory.POPULAR);
             case R.id.showTopRated:
-                return showCategory(MovieCategories.TOP_RATED);
+                return showCategory(MovieCategory.TOP_RATED);
             case R.id.showFavourites:
-                return showCategory(MovieCategories.FAVOURITES);
+                return showCategory(MovieCategory.FAVOURITES);
         }
 
         return super.onOptionsItemSelected(item);
@@ -212,18 +234,27 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void showOfflineDialog(){
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setCancelable(false)
                 .setTitle(R.string.offline_dialog_title)
                 .setMessage(R.string.offline_dialog_message)
-                .setPositiveButton(R.string.offline_dialog_retry, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.offline_dialog_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        loadMovies(false);
+                        dialogInterface.dismiss();
                     }
                 })
                 .create();
 
         dialog.show();
+    }
+
+    /**
+     * From https://stackoverflow.com/questions/1560788/how-to-check-internet-access-on-android-inetaddress-never-times-out
+     */
+    private boolean isOnline(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
 }

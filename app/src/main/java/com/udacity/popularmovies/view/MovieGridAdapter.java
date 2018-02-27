@@ -14,6 +14,7 @@ import com.udacity.popularmovies.activity.MovieDetailsActivity;
 import com.udacity.popularmovies.common.FileUtils;
 import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
+import com.udacity.popularmovies.network.NetworkConnectionContext;
 
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class MovieGridAdapter extends RecyclerView.Adapter<MovieGridAdapter.Movi
     public void onBindViewHolder(MovieViewHolder holder, int position) {
         Movie movie = movies.get(position);
 
-        if(movie.getFromDatabase()){
+        if(movie.getFromDatabase() && NetworkConnectionContext.getInstance().isOffline()){
             Picasso.with(context)
                     .load(FileUtils.readPoster(context, movie.getPosterPath()))
                     .placeholder(R.drawable.picasso_placeholder_portrait)

@@ -6,8 +6,8 @@
 
     <!-- Offline dialog -->
     <string name="offline_dialog_title">You are offline</string>
-    <string name="offline_dialog_message">Internet connection is required to use this application. Please enable either your Wi-Fi or your mobile data.</string>
-    <string name="offline_dialog_retry">Retry</string>
+    <string name="offline_dialog_message">You are currently using this application in offline mode, which means some features are not available for you. To access the complete functionality, please enable either your Wi-Fi or your mobile data.</string>
+    <string name="offline_dialog_positive">Got it</string>
 
     <!-- Settings menu -->
     <string name="settings_show_popular">Show popular</string>
@@ -29,11 +29,13 @@
     <string name="trailers_title">Trailers</string>
     <string name="loading_trailers">Loading trailers...</string>
     <string name="no_trailers">No trailers found for this movie.</string>
+    <string name="offline_no_trailers">Trailers are not available in offline mode.</string>
 
     <string name="reviews_title">Reviews</string>
     <string name="reviews_hint">Hint: You can click on a review to read more / less.</string>
     <string name="loading_reviews">Loading reviews...</string>
     <string name="no_reviews">No reviews found for this movie.</string>
+    <string name="offline_no_reviews">Reviews are not available in offline mode.</string>
 
     <string name="content_description_mark_as_favourite">Mark as favourite</string>
     <string name="content_description_unmark_as_favourite">Unmark as favourite</string>

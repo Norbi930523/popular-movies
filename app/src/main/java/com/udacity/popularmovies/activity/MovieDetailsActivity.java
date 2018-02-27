@@ -27,6 +27,7 @@ import com.udacity.popularmovies.model.MovieTrailer;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieReviewListLoader;
 import com.udacity.popularmovies.network.MovieTrailerListLoader;
+import com.udacity.popularmovies.network.NetworkConnectionContext;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -103,24 +104,34 @@ public class MovieDetailsActivity extends AppCompatActivity {
 
     private void loadReviews() {
         reviewLoadingInfoText = findViewById(R.id.reviewLoadingInfoText);
-
         movieReviewsList = findViewById(R.id.movieReviewsList);
+
+        if(NetworkConnectionContext.getInstance().isOffline()){
+            reviewLoadingInfoText.setText(R.string.offline_no_reviews);
+            movieReviewsList.setVisibility(View.GONE);
+            return;
+        }
 
         Bundle args = new Bundle();
         args.putLong(MovieReviewListLoader.MOVIE_ID_PARAM, movie.getId());
 
-        getSupportLoaderManager().restartLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
+        getSupportLoaderManager().initLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
     }
 
     private void loadTrailers() {
         trailerLoadingInfoText = findViewById(R.id.trailerLoadingInfoText);
-
         movieTrailersList = findViewById(R.id.movieTrailersList);
+
+        if(NetworkConnectionContext.getInstance().isOffline()){
+            trailerLoadingInfoText.setText(R.string.offline_no_trailers);
+            movieTrailersList.setVisibility(View.GONE);
+            return;
+        }
 
         Bundle args = new Bundle();
         args.putLong(MovieTrailerListLoader.MOVIE_ID_PARAM, movie.getId());
 
-        getSupportLoaderManager().restartLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
+        getSupportLoaderManager().initLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
     }
 
     private void populateUI() {
@@ -128,7 +139,8 @@ public class MovieDetailsActivity extends AppCompatActivity {
         ImageView posterImage = findViewById(R.id.posterImage);
         posterImage.setContentDescription(movie.getTitle());
 
-        if(isFavourite){
+        if(isFavourite && NetworkConnectionContext.getInstance().isOffline()){
+            /* When offline, load a favourite movie poster from storage */
             Picasso.with(this)
                     .load(FileUtils.readPoster(this, movie.getPosterPath()))
                     .placeholder(R.drawable.picasso_placeholder_portrait)

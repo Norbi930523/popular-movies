@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onResume() {
         super.onResume();
 
-        Boolean contentChanged = FavouriteMovieContentObserver.getInstance().getContentChanged();
+        Boolean contentChanged = FavouriteMovieContentObserver.getInstance().hasContentChanged();
 
         /* Reload movies when the FavouriteMovie content changes and we are on the Favourites page */
         if(contentChanged && selectedMovieCategory == MovieCategories.FAVOURITES){

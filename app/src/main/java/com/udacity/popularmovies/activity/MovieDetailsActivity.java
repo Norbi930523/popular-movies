@@ -4,13 +4,14 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,11 +35,15 @@ import java.util.List;
 
 public class MovieDetailsActivity extends AppCompatActivity {
 
+    private static final int REVIEW_CONTENT_SHORT_CHARS = 250;
+
     private static final int MOVIE_TRAILER_LOADER_ID = 200;
 
     private static final int MOVIE_REVIEW_LOADER_ID = 201;
 
     public static final String MOVIE_PARAM = "movie";
+
+    private Movie movie;
 
     private TextView trailerLoadingInfoText;
 
@@ -47,6 +52,8 @@ public class MovieDetailsActivity extends AppCompatActivity {
     private TextView reviewLoadingInfoText;
 
     private LinearLayout movieReviewsList;
+
+    private ImageButton toggleFavouriteButton;
 
     private boolean isFavourite;
 
@@ -60,7 +67,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
         }
 
         Intent intent = getIntent();
-        Movie movie = intent.getParcelableExtra(MOVIE_PARAM);
+        movie = intent.getParcelableExtra(MOVIE_PARAM);
 
         if(movie == null){
             finish();
@@ -68,51 +75,55 @@ public class MovieDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        isFavourite = isFavouriteMovie(movie.getId());
+        isFavourite = isFavouriteMovie();
 
-        populateUI(movie);
+        populateUI();
 
-        loadTrailers(movie.getId());
+        loadTrailers();
 
-        loadReviews(movie.getId());
+        loadReviews();
 
     }
 
-    private boolean isFavouriteMovie(Long movieId){
-        Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movieId.toString()).build();
+    private boolean isFavouriteMovie(){
+        Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId().toString()).build();
 
         Cursor cursor = getContentResolver().query(uri, null, null, null, null);
 
-        boolean isMovieFound = cursor != null && cursor.getCount() == 1;
+        boolean isMovieFound = false;
 
-        cursor.close();
+        if(cursor != null){
+            isMovieFound = cursor.getCount() == 1;
+
+            cursor.close();
+        }
 
         return isMovieFound;
     }
 
-    private void loadReviews(Long movieId) {
+    private void loadReviews() {
         reviewLoadingInfoText = findViewById(R.id.reviewLoadingInfoText);
 
         movieReviewsList = findViewById(R.id.movieReviewsList);
 
         Bundle args = new Bundle();
-        args.putLong(MovieReviewListLoader.MOVIE_ID_PARAM, movieId);
+        args.putLong(MovieReviewListLoader.MOVIE_ID_PARAM, movie.getId());
 
         getSupportLoaderManager().restartLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
     }
 
-    private void loadTrailers(Long movieId) {
+    private void loadTrailers() {
         trailerLoadingInfoText = findViewById(R.id.trailerLoadingInfoText);
 
         movieTrailersList = findViewById(R.id.movieTrailersList);
 
         Bundle args = new Bundle();
-        args.putLong(MovieTrailerListLoader.MOVIE_ID_PARAM, movieId);
+        args.putLong(MovieTrailerListLoader.MOVIE_ID_PARAM, movie.getId());
 
         getSupportLoaderManager().restartLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
     }
 
-    private void populateUI(final Movie movie) {
+    private void populateUI() {
         /* Poster image */
         ImageView posterImage = findViewById(R.id.posterImage);
         posterImage.setContentDescription(movie.getTitle());
@@ -160,38 +171,67 @@ public class MovieDetailsActivity extends AppCompatActivity {
         overview.setText(movie.getOverview());
 
         /* Toggle favourite */
-        Button toggleFavourite = findViewById(R.id.toggleFavourite);
+        toggleFavouriteButton = findViewById(R.id.toggleFavouriteButton);
+        updateFavouriteButton();
 
-        if(isFavourite){
-            toggleFavourite.setText("Unfav");
-        }
-
-        toggleFavourite.setOnClickListener(new View.OnClickListener() {
+        toggleFavouriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(!isFavourite){
-                    ContentValues values = new ContentValues();
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_MOVIE_ID, movie.getId());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_ORIGINAL_TITLE, movie.getOriginalTitle());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_LOCALIZED_TITLE, movie.getTitle());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate().getTime());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT, movie.getVoteCount());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW, movie.getOverview());
-                    values.put(MovieContract.FavouriteMovieEntry.COLUMN_POSTER, movie.getPosterPath());
-
-                    getContentResolver().insert(MovieContract.FavouriteMovieEntry.CONTENT_URI, values);
-
-                    FileUtils.savePoster(MovieDetailsActivity.this, movie.getPosterPath());
+                    markMovieAsFavourite();
                 } else {
-                    Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId().toString()).build();
-                    getContentResolver().delete(uri, null, null);
-
-                    FileUtils.deletePoster(MovieDetailsActivity.this, movie.getPosterPath());
+                    unmarkMovieAsFavourite();
                 }
 
             }
         });
+    }
+
+    private void updateFavouriteButton(){
+        if(isFavourite){
+            toggleFavouriteButton.setContentDescription(getString(R.string.content_description_unmark_as_favourite));
+            toggleFavouriteButton.setBackgroundResource(R.drawable.ic_unfav);
+        } else {
+            toggleFavouriteButton.setContentDescription(getString(R.string.content_description_mark_as_favourite));
+            toggleFavouriteButton.setBackgroundResource(R.drawable.ic_fav);
+        }
+    }
+
+    private void markMovieAsFavourite(){
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                ContentValues movieValues = movie.getAsContentValues();
+
+                getContentResolver().insert(MovieContract.FavouriteMovieEntry.CONTENT_URI, movieValues);
+
+                FileUtils.savePoster(MovieDetailsActivity.this, movie.getPosterPath());
+
+                isFavourite = true;
+
+                MovieDetailsActivity.this.runOnUiThread(updateFavouriteButtonRunnable);
+            }
+        };
+
+        AsyncTask.execute(runnable);
+    }
+
+    private void unmarkMovieAsFavourite(){
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                Uri uri = MovieContract.FavouriteMovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId().toString()).build();
+                getContentResolver().delete(uri, null, null);
+
+                FileUtils.deletePoster(MovieDetailsActivity.this, movie.getPosterPath());
+
+                isFavourite = false;
+
+                MovieDetailsActivity.this.runOnUiThread(updateFavouriteButtonRunnable);
+            }
+        };
+
+        AsyncTask.execute(runnable);
     }
 
     /* Movie trailers loader callback */
@@ -287,8 +327,6 @@ public class MovieDetailsActivity extends AppCompatActivity {
         }
     };
 
-    private static final int REVIEW_CONTENT_SHORT_CHARS = 250;
-
     private View createMovieReviewItem(MovieReview review, boolean isLastItem){
         LayoutInflater layoutInflater = LayoutInflater.from(this);
 
@@ -328,6 +366,13 @@ public class MovieDetailsActivity extends AppCompatActivity {
                 view.setTag(R.id.review_item_show_full_content_key, false);
                 reviewContent.setText(StringUtils.abbreviate(content, REVIEW_CONTENT_SHORT_CHARS));
             }
+        }
+    };
+
+    private Runnable updateFavouriteButtonRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateFavouriteButton();
         }
     };
 

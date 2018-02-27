@@ -1,9 +1,11 @@
 package com.udacity.popularmovies.model;
 
+import android.content.ContentValues;
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.google.gson.annotations.SerializedName;
+import com.udacity.popularmovies.database.movie.MovieContract;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -147,6 +149,20 @@ public class Movie implements Parcelable {
             return new Movie[size];
         }
     };
+
+    public ContentValues getAsContentValues(){
+        ContentValues values = new ContentValues();
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_MOVIE_ID, id);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_ORIGINAL_TITLE, originalTitle);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_LOCALIZED_TITLE, title);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_RELEASE_DATE, releaseDate.getTime());
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_AVERAGE, voteAverage);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT, voteCount);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW, overview);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_POSTER, posterPath);
+
+        return values;
+    }
 
     public Long getId() {
         return id;

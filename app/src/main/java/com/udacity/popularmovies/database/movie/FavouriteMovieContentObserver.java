@@ -44,4 +44,15 @@ public class FavouriteMovieContentObserver extends ContentObserver {
     public void setContentChanged(Boolean contentChanged) {
         this.contentChanged = contentChanged;
     }
+
+    /**
+     *  Returns the value of contentChanged and invalidates it.
+     */
+    public Boolean hasContentChanged() {
+        Boolean oldValue = contentChanged;
+
+        contentChanged = false;
+
+        return oldValue;
+    }
 }

@@ -34,4 +34,7 @@
     <string name="reviews_hint">Hint: You can click on a review to read more / less.</string>
     <string name="loading_reviews">Loading reviews...</string>
     <string name="no_reviews">No reviews found for this movie.</string>
+
+    <string name="content_description_mark_as_favourite">Mark as favourite</string>
+    <string name="content_description_unmark_as_favourite">Unmark as favourite</string>
 </resources>

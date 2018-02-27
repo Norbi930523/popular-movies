@@ -11,20 +11,46 @@
         android:orientation="vertical"
         android:padding="@dimen/spacing_medium">
 
-        <!-- Original Title -->
-        <TextView
-            android:id="@+id/originalTitle"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/MovieDetailsTitle.Level1"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="@dimen/spacing_large">
 
-        <!-- Localized title -->
-        <TextView
-            android:id="@+id/localizedTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            android:textSize="@dimen/font_medium"/>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginRight="@dimen/spacing_medium"
+                android:layout_marginEnd="@dimen/spacing_medium">
+
+                <!-- Original Title -->
+                <TextView
+                    android:id="@+id/originalTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/MovieDetailsTitle.Level1"/>
+
+                <!-- Localized title -->
+                <TextView
+                    android:id="@+id/localizedTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/font_medium"/>
+
+            </LinearLayout>
+
+            <!-- Toggle favourite -->
+            <ImageButton
+                android:id="@+id/toggleFavouriteButton"
+                android:contentDescription="@string/content_description_mark_as_favourite"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="@dimen/spacing_small"
+                android:background="@drawable/ic_fav"/>
+
+        </LinearLayout>
 
         <!-- Movie details -->
         <LinearLayout
@@ -43,8 +69,9 @@
                 android:layout_marginRight="@dimen/spacing_medium"/>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical">
 
                 <!-- Release date -->
@@ -73,13 +100,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/font_medium"/>
-
-                <!-- Toggle favourite -->
-                <Button
-                    android:id="@+id/toggleFavourite"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Fav"/>
 
             </LinearLayout>
 

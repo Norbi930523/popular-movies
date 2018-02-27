@@ -48,25 +48,18 @@ public class FileUtils {
     }
 
     public static void savePoster(final Context context, final String posterPath){
-        Runnable savePosterTask = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    byte[] posterImage = downloadPoster(posterPath);
-                    File posterFile = getPosterFile(context, posterPath);
+        try {
+            byte[] posterImage = downloadPoster(posterPath);
+            File posterFile = getPosterFile(context, posterPath);
 
-                    if(posterFile != null && posterImage != null){
-                        FileOutputStream fos = new FileOutputStream(posterFile);
-                        fos.write(posterImage);
-                        fos.close();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "An error occurred while saving poster", e);
-                }
+            if(posterFile != null && posterImage != null){
+                FileOutputStream fos = new FileOutputStream(posterFile);
+                fos.write(posterImage);
+                fos.close();
             }
-        };
-
-        AsyncTask.execute(savePosterTask);
+        } catch (Exception e) {
+            Log.e(TAG, "An error occurred while saving poster", e);
+        }
     }
 
     private static File getPostersDirectory(Context context){

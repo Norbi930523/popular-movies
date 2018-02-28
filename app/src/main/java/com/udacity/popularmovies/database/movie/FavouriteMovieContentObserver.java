@@ -51,7 +51,7 @@ public class FavouriteMovieContentObserver extends ContentObserver {
     public Boolean hasContentChanged() {
         Boolean oldValue = contentChanged;
 
-        contentChanged = false;
+        contentChanged = Boolean.FALSE;
 
         return oldValue;
     }

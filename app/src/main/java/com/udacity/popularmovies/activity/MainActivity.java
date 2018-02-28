@@ -1,15 +1,12 @@
 package com.udacity.popularmovies.activity;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
@@ -33,7 +30,7 @@ import com.udacity.popularmovies.view.MovieGridAdapter;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Movie>> {
+public class MainActivity extends StateAwareActivity implements LoaderManager.LoaderCallbacks<List<Movie>> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -46,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         static final int TOP_RATED = 1;
         static final int FAVOURITES = 2;
     }
+
+    private NetworkConnectivityChangeListener connectivityChangeListener;
 
     private int selectedMovieCategory;
 
@@ -63,12 +62,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         /* Before doing anything, initialize the network connection context */
         NetworkConnectionContext.getInstance().setOnline(NetworkUtils.isOnline(this));
 
+        connectivityChangeListener = new NetworkConnectivityChangeListener(NetworkConnectionContext.getInstance().isOnline());
+
         moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
         moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
 
         loadingIndicator = findViewById(R.id.loadingIndicator);
 
-        registerReceiver(connectivityChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        registerReceiver(connectivityChangeListener, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         getContentResolver().registerContentObserver(
                 MovieContract.FavouriteMovieEntry.CONTENT_URI,
@@ -97,9 +98,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         super.onResume();
 
         Boolean contentChanged = FavouriteMovieContentObserver.getInstance().hasContentChanged();
+        Boolean connectivityStateChanged = connectivityChangeListener.hasConnectivityStateChanged();
 
-        /* Reload movies when the FavouriteMovie content changes and we are on the Favourites page */
-        if(contentChanged && selectedMovieCategory == MovieCategory.FAVOURITES){
+        /* Reload movies when the network connectivity state or
+           the FavouriteMovie content changes and we are on the Favourites page */
+        if(connectivityStateChanged || contentChanged && selectedMovieCategory == MovieCategory.FAVOURITES){
             loadMovies(false);
         }
     }
@@ -108,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     protected void onDestroy() {
         super.onDestroy();
 
-        unregisterReceiver(connectivityChangeReceiver);
+        unregisterReceiver(connectivityChangeListener);
 
         getContentResolver().unregisterContentObserver(FavouriteMovieContentObserver.getInstance());
     }
@@ -254,17 +257,26 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         dialog.show();
     }
 
-    private NetworkConnectivityChangeReceiver connectivityChangeReceiver = new NetworkConnectivityChangeReceiver() {
+    /* If the user has gone offline, go to the Favourites page */
+    private class NetworkConnectivityChangeListener extends NetworkConnectivityChangeReceiver {
+
+        public NetworkConnectivityChangeListener(boolean onlineState) {
+            super(onlineState);
+        }
+
         @Override
         public void onNetworkConnectivityChanged() {
             invalidateOptionsMenu();
 
-            /* If the user has gone offline, go to the Favourites page */
+
             if(NetworkConnectionContext.getInstance().isOffline()){
                 selectedMovieCategory = MovieCategory.FAVOURITES;
-                loadMovies(false);
+
+                if(isActivityOnScreen()){
+                    loadMovies(false);
+                }
             }
         }
-    };
+    }
 
 }

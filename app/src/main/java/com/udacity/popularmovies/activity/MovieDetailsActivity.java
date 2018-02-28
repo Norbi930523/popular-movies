@@ -10,7 +10,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -37,7 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-public class MovieDetailsActivity extends AppCompatActivity {
+public class MovieDetailsActivity extends StateAwareActivity {
 
     private static final int REVIEW_CONTENT_SHORT_CHARS = 250;
 
@@ -46,6 +45,8 @@ public class MovieDetailsActivity extends AppCompatActivity {
     private static final int MOVIE_REVIEW_LOADER_ID = 201;
 
     public static final String MOVIE_PARAM = "movie";
+
+    private NetworkConnectivityChangeListener connectivityChangeListener;
 
     private Movie movie;
 
@@ -79,7 +80,9 @@ public class MovieDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        registerReceiver(connectivityChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+        connectivityChangeListener = new NetworkConnectivityChangeListener(NetworkConnectionContext.getInstance().isOnline());
+
+        registerReceiver(connectivityChangeListener, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         isFavourite = isFavouriteMovie();
 
@@ -92,10 +95,20 @@ public class MovieDetailsActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(connectivityChangeListener.hasConnectivityStateChanged()){
+            loadTrailers(false);
+            loadReviews(false);
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        unregisterReceiver(connectivityChangeReceiver);
+        unregisterReceiver(connectivityChangeListener);
     }
 
     private boolean isFavouriteMovie(){
@@ -120,6 +133,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
 
         if(NetworkConnectionContext.getInstance().isOffline()){
             reviewLoadingInfoText.setText(R.string.offline_no_reviews);
+            reviewLoadingInfoText.setVisibility(View.VISIBLE);
             movieReviewsList.setVisibility(View.GONE);
             return;
         }
@@ -140,6 +154,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
 
         if(NetworkConnectionContext.getInstance().isOffline()){
             trailerLoadingInfoText.setText(R.string.offline_no_trailers);
+            trailerLoadingInfoText.setVisibility(View.VISIBLE);
             movieTrailersList.setVisibility(View.GONE);
             return;
         }
@@ -408,12 +423,19 @@ public class MovieDetailsActivity extends AppCompatActivity {
         }
     };
 
-    private NetworkConnectivityChangeReceiver connectivityChangeReceiver = new NetworkConnectivityChangeReceiver() {
+    private class NetworkConnectivityChangeListener extends NetworkConnectivityChangeReceiver {
+
+        public NetworkConnectivityChangeListener(boolean onlineState) {
+            super(onlineState);
+        }
+
         @Override
         public void onNetworkConnectivityChanged() {
-            loadTrailers(false);
-            loadReviews(false);
+            if(isActivityOnScreen()){
+                loadTrailers(false);
+                loadReviews(false);
+            }
         }
-    };
+    }
 
 }

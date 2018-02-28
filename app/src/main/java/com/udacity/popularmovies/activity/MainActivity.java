@@ -2,6 +2,7 @@ package com.udacity.popularmovies.activity;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -26,6 +27,8 @@ import com.udacity.popularmovies.model.Movie;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieListLoader;
 import com.udacity.popularmovies.network.NetworkConnectionContext;
+import com.udacity.popularmovies.network.NetworkConnectivityChangeReceiver;
+import com.udacity.popularmovies.network.NetworkUtils;
 import com.udacity.popularmovies.view.MovieGridAdapter;
 
 import java.util.List;
@@ -58,12 +61,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         setContentView(R.layout.activity_main);
 
         /* Before doing anything, initialize the network connection context */
-        NetworkConnectionContext.getInstance().setOnline(isOnline(this));
+        NetworkConnectionContext.getInstance().setOnline(NetworkUtils.isOnline(this));
 
         moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
         moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
 
         loadingIndicator = findViewById(R.id.loadingIndicator);
+
+        registerReceiver(connectivityChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         getContentResolver().registerContentObserver(
                 MovieContract.FavouriteMovieEntry.CONTENT_URI,
@@ -102,6 +107,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        unregisterReceiver(connectivityChangeReceiver);
 
         getContentResolver().unregisterContentObserver(FavouriteMovieContentObserver.getInstance());
     }
@@ -247,14 +254,17 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         dialog.show();
     }
 
-    /**
-     * From https://stackoverflow.com/questions/1560788/how-to-check-internet-access-on-android-inetaddress-never-times-out
-     */
-    private boolean isOnline(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+    private NetworkConnectivityChangeReceiver connectivityChangeReceiver = new NetworkConnectivityChangeReceiver() {
+        @Override
+        public void onNetworkConnectivityChanged() {
+            invalidateOptionsMenu();
 
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
+            /* If the user has gone offline, go to the Favourites page */
+            if(NetworkConnectionContext.getInstance().isOffline()){
+                selectedMovieCategory = MovieCategory.FAVOURITES;
+                loadMovies(false);
+            }
+        }
+    };
 
 }

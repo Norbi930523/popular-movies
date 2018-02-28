@@ -2,7 +2,9 @@ package com.udacity.popularmovies.activity;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -28,6 +30,7 @@ import com.udacity.popularmovies.network.MovieDbUrlFactory;
 import com.udacity.popularmovies.network.MovieReviewListLoader;
 import com.udacity.popularmovies.network.MovieTrailerListLoader;
 import com.udacity.popularmovies.network.NetworkConnectionContext;
+import com.udacity.popularmovies.network.NetworkConnectivityChangeReceiver;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -76,14 +79,23 @@ public class MovieDetailsActivity extends AppCompatActivity {
             return;
         }
 
+        registerReceiver(connectivityChangeReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+
         isFavourite = isFavouriteMovie();
 
         populateUI();
 
-        loadTrailers();
+        loadTrailers(true);
 
-        loadReviews();
+        loadReviews(true);
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        unregisterReceiver(connectivityChangeReceiver);
     }
 
     private boolean isFavouriteMovie(){
@@ -102,7 +114,7 @@ public class MovieDetailsActivity extends AppCompatActivity {
         return isMovieFound;
     }
 
-    private void loadReviews() {
+    private void loadReviews(boolean initLoader) {
         reviewLoadingInfoText = findViewById(R.id.reviewLoadingInfoText);
         movieReviewsList = findViewById(R.id.movieReviewsList);
 
@@ -115,10 +127,14 @@ public class MovieDetailsActivity extends AppCompatActivity {
         Bundle args = new Bundle();
         args.putLong(MovieReviewListLoader.MOVIE_ID_PARAM, movie.getId());
 
-        getSupportLoaderManager().initLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
+        if(initLoader){
+            getSupportLoaderManager().initLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
+        } else {
+            getSupportLoaderManager().restartLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
+        }
     }
 
-    private void loadTrailers() {
+    private void loadTrailers(boolean initLoader) {
         trailerLoadingInfoText = findViewById(R.id.trailerLoadingInfoText);
         movieTrailersList = findViewById(R.id.movieTrailersList);
 
@@ -131,7 +147,11 @@ public class MovieDetailsActivity extends AppCompatActivity {
         Bundle args = new Bundle();
         args.putLong(MovieTrailerListLoader.MOVIE_ID_PARAM, movie.getId());
 
-        getSupportLoaderManager().initLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
+        if(initLoader){
+            getSupportLoaderManager().initLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
+        } else {
+            getSupportLoaderManager().restartLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
+        }
     }
 
     private void populateUI() {
@@ -385,6 +405,14 @@ public class MovieDetailsActivity extends AppCompatActivity {
         @Override
         public void run() {
             updateFavouriteButton();
+        }
+    };
+
+    private NetworkConnectivityChangeReceiver connectivityChangeReceiver = new NetworkConnectivityChangeReceiver() {
+        @Override
+        public void onNetworkConnectivityChanged() {
+            loadTrailers(false);
+            loadReviews(false);
         }
     };
 

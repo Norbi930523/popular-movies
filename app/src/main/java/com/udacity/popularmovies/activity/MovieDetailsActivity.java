@@ -103,11 +103,11 @@ public class MovieDetailsActivity extends StateAwareActivity {
     }
 
     private void loadTrailers(){
-        movieTrailersFragment.loadTrailers(false);
+        movieTrailersFragment.reloadItems();
     }
 
     private void loadReviews(){
-        movieReviewsFragment.loadReviews(false);
+        movieReviewsFragment.reloadItems();
     }
 
     @Override

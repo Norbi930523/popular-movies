@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
-    
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,7 +20,7 @@
 
     <!-- Loading info (loading..., no reviews found, user is offline) -->
     <TextView
-        android:id="@+id/reviewLoadingInfoText"
+        android:id="@+id/loadingInfoText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/loading_reviews"
@@ -29,7 +29,7 @@
         android:paddingBottom="@dimen/spacing_medium"/>
 
     <LinearLayout
-        android:id="@+id/movieReviewsList"
+        android:id="@+id/itemList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"

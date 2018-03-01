@@ -12,7 +12,7 @@
 
     <!-- Loading info (loading..., no trailers found, user is offline) -->
     <TextView
-        android:id="@+id/trailerLoadingInfoText"
+        android:id="@+id/loadingInfoText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="@dimen/font_medium"
@@ -21,7 +21,7 @@
         android:paddingBottom="@dimen/spacing_medium"/>
 
     <LinearLayout
-        android:id="@+id/movieTrailersList"
+        android:id="@+id/itemList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"

@@ -8,13 +8,10 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
-import android.view.LayoutInflater;
+import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,27 +19,16 @@ import com.squareup.picasso.Picasso;
 import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.common.FileUtils;
 import com.udacity.popularmovies.database.movie.MovieContract;
+import com.udacity.popularmovies.fragment.MovieReviewsFragment;
+import com.udacity.popularmovies.fragment.MovieTrailersFragment;
 import com.udacity.popularmovies.model.Movie;
-import com.udacity.popularmovies.model.MovieReview;
-import com.udacity.popularmovies.model.MovieTrailer;
 import com.udacity.popularmovies.network.MovieDbUrlFactory;
-import com.udacity.popularmovies.network.MovieReviewListLoader;
-import com.udacity.popularmovies.network.MovieTrailerListLoader;
 import com.udacity.popularmovies.network.NetworkConnectionContext;
 import com.udacity.popularmovies.network.NetworkConnectivityChangeReceiver;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.text.SimpleDateFormat;
-import java.util.List;
 
 public class MovieDetailsActivity extends StateAwareActivity {
-
-    private static final int REVIEW_CONTENT_SHORT_CHARS = 250;
-
-    private static final int MOVIE_TRAILER_LOADER_ID = 200;
-
-    private static final int MOVIE_REVIEW_LOADER_ID = 201;
 
     public static final String MOVIE_PARAM = "movie";
 
@@ -50,13 +36,9 @@ public class MovieDetailsActivity extends StateAwareActivity {
 
     private Movie movie;
 
-    private TextView trailerLoadingInfoText;
+    private MovieTrailersFragment movieTrailersFragment;
 
-    private LinearLayout movieTrailersList;
-
-    private TextView reviewLoadingInfoText;
-
-    private LinearLayout movieReviewsList;
+    private MovieReviewsFragment movieReviewsFragment;
 
     private ImageButton toggleFavouriteButton;
 
@@ -84,14 +66,30 @@ public class MovieDetailsActivity extends StateAwareActivity {
         connectivityChangeListener = new NetworkConnectivityChangeListener(NetworkConnectionContext.getInstance().isOnline());
         registerReceiver(connectivityChangeListener, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
+        createMovieTrailersFragment();
+        createMovieReviewsFragment();
+
         isFavourite = isFavouriteMovie();
 
         populateUI();
 
-        loadTrailers(true);
+    }
 
-        loadReviews(true);
+    private void createMovieTrailersFragment() {
+        movieTrailersFragment = MovieTrailersFragment.newInstance(movie.getId());
 
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.movieTrailersFragment, movieTrailersFragment);
+        fragmentTransaction.commit();
+
+    }
+
+    private void createMovieReviewsFragment() {
+        movieReviewsFragment = MovieReviewsFragment.newInstance(movie.getId());
+
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.movieReviewsFragment, movieReviewsFragment);
+        fragmentTransaction.commit();
     }
 
     @Override
@@ -99,9 +97,17 @@ public class MovieDetailsActivity extends StateAwareActivity {
         super.onResume();
 
         if(connectivityChangeListener.hasConnectivityStateChanged()){
-            loadTrailers(false);
-            loadReviews(false);
+            loadTrailers();
+            loadReviews();
         }
+    }
+
+    private void loadTrailers(){
+        movieTrailersFragment.loadTrailers(false);
+    }
+
+    private void loadReviews(){
+        movieReviewsFragment.loadReviews(false);
     }
 
     @Override
@@ -125,48 +131,6 @@ public class MovieDetailsActivity extends StateAwareActivity {
         }
 
         return isMovieFound;
-    }
-
-    private void loadReviews(boolean initLoader) {
-        reviewLoadingInfoText = findViewById(R.id.reviewLoadingInfoText);
-        movieReviewsList = findViewById(R.id.movieReviewsList);
-
-        if(NetworkConnectionContext.getInstance().isOffline()){
-            reviewLoadingInfoText.setText(R.string.offline_no_reviews);
-            reviewLoadingInfoText.setVisibility(View.VISIBLE);
-            movieReviewsList.setVisibility(View.GONE);
-            return;
-        }
-
-        Bundle args = new Bundle();
-        args.putLong(MovieReviewListLoader.MOVIE_ID_PARAM, movie.getId());
-
-        if(initLoader){
-            getSupportLoaderManager().initLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
-        } else {
-            getSupportLoaderManager().restartLoader(MOVIE_REVIEW_LOADER_ID, args, movieReviewLoaderCallback).forceLoad();
-        }
-    }
-
-    private void loadTrailers(boolean initLoader) {
-        trailerLoadingInfoText = findViewById(R.id.trailerLoadingInfoText);
-        movieTrailersList = findViewById(R.id.movieTrailersList);
-
-        if(NetworkConnectionContext.getInstance().isOffline()){
-            trailerLoadingInfoText.setText(R.string.offline_no_trailers);
-            trailerLoadingInfoText.setVisibility(View.VISIBLE);
-            movieTrailersList.setVisibility(View.GONE);
-            return;
-        }
-
-        Bundle args = new Bundle();
-        args.putLong(MovieTrailerListLoader.MOVIE_ID_PARAM, movie.getId());
-
-        if(initLoader){
-            getSupportLoaderManager().initLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
-        } else {
-            getSupportLoaderManager().restartLoader(MOVIE_TRAILER_LOADER_ID, args, movieTrailerLoaderCallback).forceLoad();
-        }
     }
 
     private void populateUI() {
@@ -288,141 +252,6 @@ public class MovieDetailsActivity extends StateAwareActivity {
         AsyncTask.execute(runnable);
     }
 
-    /* Movie trailers loader callback */
-    private LoaderManager.LoaderCallbacks<List<MovieTrailer>> movieTrailerLoaderCallback = new LoaderManager.LoaderCallbacks<List<MovieTrailer>>() {
-        @Override
-        public Loader<List<MovieTrailer>> onCreateLoader(int id, Bundle args) {
-            return new MovieTrailerListLoader(MovieDetailsActivity.this, args);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<MovieTrailer>> loader, List<MovieTrailer> data) {
-            movieTrailersList.removeAllViewsInLayout();
-
-            if(data == null || data.isEmpty()){
-                trailerLoadingInfoText.setText(R.string.no_trailers);
-                return;
-            }
-
-            trailerLoadingInfoText.setVisibility(View.GONE);
-            movieTrailersList.setVisibility(View.VISIBLE);
-
-            for(int i = 0; i < data.size(); i++){
-                movieTrailersList.addView(createMovieTrailerItem(data.get(i), i == data.size() - 1));
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<MovieTrailer>> loader) {
-
-        }
-
-    };
-
-    private View createMovieTrailerItem(MovieTrailer trailer, boolean isLastItem){
-        LayoutInflater layoutInflater = LayoutInflater.from(this);
-
-        View movieTrailerItem = layoutInflater.inflate(R.layout.movie_trailer_item, movieTrailersList, false);
-        movieTrailerItem.setTag(trailer.getKey());
-        movieTrailerItem.setOnClickListener(movieTrailerItemClickListener);
-
-        TextView trailerName = movieTrailerItem.findViewById(R.id.trailerName);
-        trailerName.setText(trailer.getName());
-
-        if(isLastItem){
-            /* Hide the divider below the last item of the list */
-            movieTrailerItem.findViewById(R.id.listItemDivider).setVisibility(View.GONE);
-        }
-
-        return movieTrailerItem;
-    }
-
-    private View.OnClickListener movieTrailerItemClickListener = new View.OnClickListener() {
-
-        @Override
-        public void onClick(View view) {
-            Uri youtubeTrailerUri = Uri.parse(MovieDbUrlFactory.youtubeTrailerUrl(view.getTag().toString()));
-
-            Intent watchTrailerIntent = new Intent(Intent.ACTION_VIEW, youtubeTrailerUri);
-
-            if(watchTrailerIntent.resolveActivity(getPackageManager()) != null){
-                startActivity(watchTrailerIntent);
-            }
-        }
-    };
-
-    /* Movie reviews loader callback */
-    private LoaderManager.LoaderCallbacks<List<MovieReview>> movieReviewLoaderCallback = new LoaderManager.LoaderCallbacks<List<MovieReview>>() {
-        @Override
-        public Loader<List<MovieReview>> onCreateLoader(int id, Bundle args) {
-            return new MovieReviewListLoader(MovieDetailsActivity.this, args);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<MovieReview>> loader, List<MovieReview> data) {
-            movieReviewsList.removeAllViewsInLayout();
-
-            if(data == null || data.isEmpty()){
-                reviewLoadingInfoText.setText(R.string.no_reviews);
-                return;
-            }
-
-            reviewLoadingInfoText.setVisibility(View.GONE);
-            movieReviewsList.setVisibility(View.VISIBLE);
-
-            for(int i = 0; i < data.size(); i++){
-                movieReviewsList.addView(createMovieReviewItem(data.get(i), i == data.size() - 1));
-            }
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<MovieReview>> loader) {
-
-        }
-    };
-
-    private View createMovieReviewItem(MovieReview review, boolean isLastItem){
-        LayoutInflater layoutInflater = LayoutInflater.from(this);
-
-        View movieReviewItem = layoutInflater.inflate(R.layout.movie_review_item, movieReviewsList, false);
-
-        movieReviewItem.setTag(R.id.review_item_full_content_key, review.getContent());
-        movieReviewItem.setTag(R.id.review_item_show_full_content_key, false);
-
-        movieReviewItem.setOnClickListener(movieReviewItemClickListener);
-
-        TextView reviewAuthor = movieReviewItem.findViewById(R.id.reviewAuthor);
-        reviewAuthor.setText(review.getAuthor());
-
-        TextView reviewContent = movieReviewItem.findViewById(R.id.reviewContent);
-        reviewContent.setText(StringUtils.abbreviate(review.getContent(), REVIEW_CONTENT_SHORT_CHARS));
-
-        if(isLastItem){
-            /* Hide the divider below the last item of the list */
-            movieReviewItem.findViewById(R.id.listItemDivider).setVisibility(View.GONE);
-        }
-
-        return movieReviewItem;
-    }
-
-    private View.OnClickListener movieReviewItemClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            TextView reviewContent = view.findViewById(R.id.reviewContent);
-
-            String content = view.getTag(R.id.review_item_full_content_key).toString();
-            boolean showFullContent = (boolean) view.getTag(R.id.review_item_show_full_content_key);
-
-            if(!showFullContent){
-                view.setTag(R.id.review_item_show_full_content_key, true);
-                reviewContent.setText(content);
-            } else {
-                view.setTag(R.id.review_item_show_full_content_key, false);
-                reviewContent.setText(StringUtils.abbreviate(content, REVIEW_CONTENT_SHORT_CHARS));
-            }
-        }
-    };
-
     private Runnable onFavouriteStatusChangedRunnable = new Runnable() {
         @Override
         public void run() {
@@ -439,8 +268,8 @@ public class MovieDetailsActivity extends StateAwareActivity {
         @Override
         public void onNetworkConnectivityChanged() {
             if(isActivityOnScreen()){
-                loadTrailers(false);
-                loadReviews(false);
+                loadTrailers();
+                loadReviews();
             }
         }
     }

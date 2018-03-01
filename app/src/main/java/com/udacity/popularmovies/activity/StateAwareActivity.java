@@ -10,11 +10,11 @@ import android.support.v7.app.AppCompatActivity;
 public class StateAwareActivity extends AppCompatActivity {
 
     public class ActivityState {
-        public static final int CREATED = 0;
-        public static final int STARTED = 1;
-        public static final int RESUMED = 2;
-        public static final int PAUSED = 3;
-        public static final int STOPPED = 4;
+        static final int CREATED = 0;
+        static final int STARTED = 1;
+        static final int RESUMED = 2;
+        static final int PAUSED = 3;
+        static final int STOPPED = 4;
     }
 
     protected int currentActivityState;

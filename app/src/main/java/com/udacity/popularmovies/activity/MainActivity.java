@@ -16,6 +16,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.database.movie.FavouriteMovieContentObserver;
@@ -48,6 +49,8 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
 
     private int selectedMovieCategory;
 
+    private TextView noMoviesText;
+
     private RecyclerView moviesRecyclerView;
 
     private MovieGridAdapter movieGridAdapter;
@@ -63,6 +66,8 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
         moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
 
         loadingIndicator = findViewById(R.id.loadingIndicator);
+
+        noMoviesText = findViewById(R.id.noMoviesText);
 
         /* Before doing anything, initialize the network connection context */
         NetworkConnectionContext.getInstance().setOnline(NetworkUtils.isOnline(this));
@@ -230,11 +235,35 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
     public void onLoadFinished(Loader<List<Movie>> loader, List<Movie> data) {
         loadingIndicator.setVisibility(View.GONE);
 
+        if(data.isEmpty()){
+            updateNoMoviesText();
+
+            noMoviesText.setVisibility(View.VISIBLE);
+            moviesRecyclerView.setVisibility(View.GONE);
+        } else {
+            noMoviesText.setVisibility(View.GONE);
+            moviesRecyclerView.setVisibility(View.VISIBLE);
+        }
+
         if(movieGridAdapter == null){
             movieGridAdapter = new MovieGridAdapter(data, this);
             moviesRecyclerView.setAdapter(movieGridAdapter);
         } else {
             movieGridAdapter.updateMovies(data);
+        }
+    }
+
+    private void updateNoMoviesText(){
+        switch (selectedMovieCategory){
+            case MovieCategory.POPULAR:
+                noMoviesText.setText(R.string.no_popular_movies_to_show);
+                break;
+            case MovieCategory.TOP_RATED:
+                noMoviesText.setText(R.string.no_top_rated_movies_to_show);
+                break;
+            case MovieCategory.FAVOURITES:
+                noMoviesText.setText(R.string.no_favourite_movies_to_show);
+                break;
         }
     }
 

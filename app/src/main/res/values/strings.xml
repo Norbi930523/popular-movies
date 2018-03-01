@@ -14,6 +14,11 @@
     <string name="settings_show_top_rated">Show top rated</string>
     <string name="settings_show_favourites">Show favourites</string>
 
+    <!-- Main activity -->
+    <string name="no_popular_movies_to_show">No popular movies to show</string>
+    <string name="no_top_rated_movies_to_show">No top rated movies to show</string>
+    <string name="no_favourite_movies_to_show">No favourite movies to show</string>
+
     <!-- Movie details -->
     <string name="movie_details_title">Movie details</string>
     <string name="error_movie_required">Movie data is required!</string>

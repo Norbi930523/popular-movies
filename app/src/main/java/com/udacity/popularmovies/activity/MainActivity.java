@@ -59,18 +59,19 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /* Before doing anything, initialize the network connection context */
-        NetworkConnectionContext.getInstance().setOnline(NetworkUtils.isOnline(this));
-
-        connectivityChangeListener = new NetworkConnectivityChangeListener(NetworkConnectionContext.getInstance().isOnline());
-
         moviesRecyclerView = findViewById(R.id.moviesRecyclerView);
         moviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
 
         loadingIndicator = findViewById(R.id.loadingIndicator);
 
+        /* Before doing anything, initialize the network connection context */
+        NetworkConnectionContext.getInstance().setOnline(NetworkUtils.isOnline(this));
+
+        /* Register a receiver to listen to network connectivity changes */
+        connectivityChangeListener = new NetworkConnectivityChangeListener(NetworkConnectionContext.getInstance().isOnline());
         registerReceiver(connectivityChangeListener, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
+        /* Register observer to react to fav / unfav actions */
         getContentResolver().registerContentObserver(
                 MovieContract.FavouriteMovieEntry.CONTENT_URI,
                 true,
@@ -257,7 +258,6 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
         dialog.show();
     }
 
-    /* If the user has gone offline, go to the Favourites page */
     private class NetworkConnectivityChangeListener extends NetworkConnectivityChangeReceiver {
 
         public NetworkConnectivityChangeListener(boolean onlineState) {
@@ -268,8 +268,8 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
         public void onNetworkConnectivityChanged() {
             invalidateOptionsMenu();
 
-
             if(NetworkConnectionContext.getInstance().isOffline()){
+                /* If the user has gone offline, go to the Favourites page */
                 selectedMovieCategory = MovieCategory.FAVOURITES;
 
                 if(isActivityOnScreen()){

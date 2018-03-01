@@ -39,6 +39,8 @@
 
     <string name="content_description_mark_as_favourite">Mark as favourite</string>
     <string name="content_description_unmark_as_favourite">Unmark as favourite</string>
+    <string name="toast_movie_added_to_favourites">%1$s has been added to your favourites</string>
+    <string name="toast_movie_removed_from_favourites">%1$s has been removed from your favourites</string>
 
     <!-- Online / offline mode toast -->
     <string name="toast_online_mode">You are now in online mode</string>

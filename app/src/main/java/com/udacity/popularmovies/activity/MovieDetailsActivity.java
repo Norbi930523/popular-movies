@@ -80,8 +80,8 @@ public class MovieDetailsActivity extends StateAwareActivity {
             return;
         }
 
+        /* Register a receiver to listen to network connectivity changes */
         connectivityChangeListener = new NetworkConnectivityChangeListener(NetworkConnectionContext.getInstance().isOnline());
-
         registerReceiver(connectivityChangeListener, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 
         isFavourite = isFavouriteMovie();
@@ -244,6 +244,13 @@ public class MovieDetailsActivity extends StateAwareActivity {
         }
     }
 
+    private void onFavouriteStatusChanged(){
+        updateFavouriteButton();
+
+        int messageId = isFavourite ? R.string.toast_movie_added_to_favourites : R.string.toast_movie_removed_from_favourites;
+        Toast.makeText(this, getString(messageId, movie.getTitle()), Toast.LENGTH_LONG).show();
+    }
+
     private void markMovieAsFavourite(){
         Runnable runnable = new Runnable() {
             @Override
@@ -256,7 +263,7 @@ public class MovieDetailsActivity extends StateAwareActivity {
 
                 isFavourite = true;
 
-                MovieDetailsActivity.this.runOnUiThread(updateFavouriteButtonRunnable);
+                MovieDetailsActivity.this.runOnUiThread(onFavouriteStatusChangedRunnable);
             }
         };
 
@@ -274,7 +281,7 @@ public class MovieDetailsActivity extends StateAwareActivity {
 
                 isFavourite = false;
 
-                MovieDetailsActivity.this.runOnUiThread(updateFavouriteButtonRunnable);
+                MovieDetailsActivity.this.runOnUiThread(onFavouriteStatusChangedRunnable);
             }
         };
 
@@ -416,10 +423,10 @@ public class MovieDetailsActivity extends StateAwareActivity {
         }
     };
 
-    private Runnable updateFavouriteButtonRunnable = new Runnable() {
+    private Runnable onFavouriteStatusChangedRunnable = new Runnable() {
         @Override
         public void run() {
-            updateFavouriteButton();
+            onFavouriteStatusChanged();
         }
     };
 

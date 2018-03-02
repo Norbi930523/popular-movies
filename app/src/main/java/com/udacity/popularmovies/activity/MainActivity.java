@@ -18,6 +18,13 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.firebase.jobdispatcher.Constraint;
+import com.firebase.jobdispatcher.FirebaseJobDispatcher;
+import com.firebase.jobdispatcher.GooglePlayDriver;
+import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.RetryStrategy;
+import com.firebase.jobdispatcher.Trigger;
 import com.udacity.popularmovies.R;
 import com.udacity.popularmovies.database.movie.FavouriteMovieContentObserver;
 import com.udacity.popularmovies.database.movie.MovieContract;
@@ -27,6 +34,7 @@ import com.udacity.popularmovies.network.MovieListLoader;
 import com.udacity.popularmovies.network.NetworkConnectionContext;
 import com.udacity.popularmovies.network.NetworkConnectivityChangeReceiver;
 import com.udacity.popularmovies.network.NetworkUtils;
+import com.udacity.popularmovies.service.FavouriteMovieUpdaterJobService;
 import com.udacity.popularmovies.view.MovieGridAdapter;
 
 import java.util.List;
@@ -96,6 +104,11 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
         }
 
         loadMovies(true);
+
+        if(savedInstanceState == null){
+            /* Schedule an update on favourite movies on application startup */
+            scheduleFavouriteMoviesUpdate();
+        }
 
     }
 
@@ -285,6 +298,24 @@ public class MainActivity extends StateAwareActivity implements LoaderManager.Lo
                 .create();
 
         dialog.show();
+    }
+
+    private void scheduleFavouriteMoviesUpdate(){
+        /* From https://github.com/firebase/firebase-jobdispatcher-android#scheduling-a-more-complex-job */
+        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
+
+        Job favouritesUpdateJob = dispatcher.newJobBuilder()
+                .setService(FavouriteMovieUpdaterJobService.class)
+                .setTag(FavouriteMovieUpdaterJobService.class.getName())
+                .setRecurring(false)
+                .setLifetime(Lifetime.UNTIL_NEXT_BOOT)
+                .setTrigger(Trigger.executionWindow(0, 5))
+                .setReplaceCurrent(false)
+                .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
+                .setConstraints(Constraint.ON_UNMETERED_NETWORK)
+                .build();
+
+        dispatcher.mustSchedule(favouritesUpdateJob);
     }
 
     private class NetworkConnectivityChangeListener extends NetworkConnectivityChangeReceiver {

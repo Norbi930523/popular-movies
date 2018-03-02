@@ -160,6 +160,7 @@ public class Movie implements Parcelable {
         values.put(MovieContract.FavouriteMovieEntry.COLUMN_VOTE_COUNT, voteCount);
         values.put(MovieContract.FavouriteMovieEntry.COLUMN_OVERVIEW, overview);
         values.put(MovieContract.FavouriteMovieEntry.COLUMN_POSTER, posterPath);
+        values.put(MovieContract.FavouriteMovieEntry.COLUMN_LAST_UPDATE, new Date().getTime());
 
         return values;
     }

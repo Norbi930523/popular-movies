@@ -19,13 +19,13 @@ import java.util.List;
 
 /**
  * Created by Norbert Boros on 2018.03.01..
- * Based on https://github.com/codepath/android_guides/wiki/Creating-and-Using-Fragments
  */
 
 public class MovieTrailersFragment extends MovieDetailListFragment<MovieTrailer> {
 
     private static final int MOVIE_TRAILER_LOADER_ID = 200;
 
+    /* From https://github.com/codepath/android_guides/wiki/Creating-and-Using-Fragments */
     public static MovieTrailersFragment newInstance(Long movieId){
         MovieTrailersFragment mtf = new MovieTrailersFragment();
 

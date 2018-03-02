@@ -13,6 +13,8 @@ import android.support.annotation.Nullable;
 import com.udacity.popularmovies.database.BaseContentProvider;
 import com.udacity.popularmovies.database.DatabaseOpenHelper;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * Created by Norbert Boros on 2018.02.25..
  */
@@ -146,7 +148,27 @@ public class MovieContentProvider extends BaseContentProvider {
 
     @Override
     public int update(@NonNull Uri uri, @Nullable ContentValues contentValues, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        final SQLiteDatabase database = dbHelper.getWritableDatabase();
+
+        int affectedRows = 0;
+
+        switch (URI_MATCHER.match(uri)) {
+            case FAVOURITE_MOVIE_WITH_ID:
+                String movieId = uri.getPathSegments().get(1);
+
+                affectedRows = database.update(
+                        MovieContract.FavouriteMovieEntry.TABLE_NAME,
+                        contentValues,
+                        MovieContract.FavouriteMovieEntry.COLUMN_MOVIE_ID + " = ?",
+                        ArrayUtils.toArray(movieId));
+                break;
+        }
+
+        if(affectedRows > 0){
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return affectedRows;
     }
 
     @Nullable

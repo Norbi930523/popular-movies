@@ -18,7 +18,6 @@ import java.util.List;
 
 /**
  * Created by Norbert Boros on 2018.03.01..
- * Based on https://github.com/codepath/android_guides/wiki/Creating-and-Using-Fragments
  */
 
 public class MovieReviewsFragment extends MovieDetailListFragment<MovieReview> {
@@ -27,6 +26,7 @@ public class MovieReviewsFragment extends MovieDetailListFragment<MovieReview> {
 
     private static final int MOVIE_REVIEW_LOADER_ID = 201;
 
+    /* From https://github.com/codepath/android_guides/wiki/Creating-and-Using-Fragments */
     public static MovieReviewsFragment newInstance(Long movieId) {
         MovieReviewsFragment mrf = new MovieReviewsFragment();
 
